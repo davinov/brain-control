@@ -1,24 +1,24 @@
 <template>
-  <div id="app">
+  <div id="muse-recorder-app">
     <img src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+    <MuseRecorder/>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import HelloWorld from './components/HelloWorld.vue';
+import MuseRecorder from './components/MuseRecorder.vue';
 
 @Component({
   components: {
-    HelloWorld,
+    MuseRecorder,
   },
 })
 export default class App extends Vue {}
 </script>
 
 <style lang="scss">
-#app {
+#muse-recorder-app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
