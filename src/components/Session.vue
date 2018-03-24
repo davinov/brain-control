@@ -14,7 +14,7 @@
     </svg>
 
     <button @click="saveAsJSON()">
-      Export to JSON file
+      Export session to JSON file
     </button>
   </div>
 </template>

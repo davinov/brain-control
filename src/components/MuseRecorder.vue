@@ -26,6 +26,7 @@
       > Stop the session
       </button>
       <Session
+        v-if="currentSession.length"
         :sessionData="currentSession"
       >
       </Session>

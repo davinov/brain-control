@@ -1,6 +1,5 @@
 <template>
   <div id="muse-recorder-app">
-    <img src="./assets/logo.png">
     <MuseRecorder/>
   </div>
 </template>
