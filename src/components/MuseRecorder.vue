@@ -25,9 +25,10 @@
         @click="stopRecording()"
       > Stop the recording
       </button>
-      <pre>
-        {{ currentRecordingDisplay }}
-      </pre>
+      <Recording
+        :recordingData="currentRecording"
+      >
+      </Recording>
     </div>
 
   </div>
@@ -40,12 +41,17 @@ import { EEGRelativePowerBand, POWER_BANDS, FrequencyBand } from 'muse-js/dist/l
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { bufferCount, map } from 'rxjs/operators';
+import Recording from './Recording.vue';
 
-interface AveragedRelativeBandPowers {
+export interface AveragedRelativeBandPowers {
   [index: string]: number;
 }
 
-@Component
+@Component({
+  components: {
+    Recording
+  }
+})
 export default class MuseRecorder extends Vue {
   private museClient: MuseClient;
   private connectionStatus: boolean = false;
@@ -109,10 +115,6 @@ export default class MuseRecorder extends Vue {
   private stopRecording() {
     this.currentRecordingSubscription.unsubscribe();
     this.recordingInProgress = false;
-  }
-
-  get currentRecordingDisplay() {
-    return this.currentRecording;
   }
 
   private beforeDestroy() {
