@@ -14,21 +14,21 @@
       </button>
     </div>
 
-    <div class="muse-recorder__recordings">
+    <div class="muse-recorder__sessions">
       <button
-        v-if="connectionStatus && !recordingInProgress"
-        @click="startRecording()"
-      > Start a new recording
+        v-if="connectionStatus && !sessionInProgress"
+        @click="startSession()"
+      > Start a new session
       </button>
       <button
-        v-if="recordingInProgress"
-        @click="stopRecording()"
-      > Stop the recording
+        v-if="sessionInProgress"
+        @click="stopSession()"
+      > Stop the session
       </button>
-      <Recording
-        :recordingData="currentRecording"
+      <Session
+        :sessionData="currentSession"
       >
-      </Recording>
+      </Session>
     </div>
 
   </div>
@@ -41,7 +41,7 @@ import { EEGRelativePowerBand, POWER_BANDS, FrequencyBand } from 'muse-js/dist/l
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { bufferCount, map } from 'rxjs/operators';
-import Recording from './Recording.vue';
+import Session from './Session.vue';
 
 export interface AveragedRelativeBandPowers {
   [index: string]: number;
@@ -49,16 +49,16 @@ export interface AveragedRelativeBandPowers {
 
 @Component({
   components: {
-    Recording
+    Session
   }
 })
 export default class MuseRecorder extends Vue {
   private museClient: MuseClient;
   private connectionStatus: boolean = false;
-  private recordingInProgress: boolean = false;
-  private currentRecordingSubscription: Subscription;
+  private sessionInProgress: boolean = false;
+  private currentSessionSubscription: Subscription;
 
-  private currentRecording: AveragedRelativeBandPowers[] = [];
+  private currentSession: AveragedRelativeBandPowers[] = [];
 
   private created() {
     this.museClient = new MuseClient();
@@ -73,30 +73,30 @@ export default class MuseRecorder extends Vue {
     );
   }
 
-  private startRecording() {
-    this.currentRecording = [];
-    this.currentRecordingSubscription = (this.museClient.relativeBandPowers as Observable<EEGRelativePowerBand[]>)
+  private startSession() {
+    this.currentSession = [];
+    this.currentSessionSubscription = (this.museClient.relativeBandPowers as Observable<EEGRelativePowerBand[]>)
       .pipe(
         bufferCount(100, 10)
       ,
-        map( (recordings: EEGRelativePowerBand[][]): EEGRelativePowerBand[] =>
+        map( (sessions: EEGRelativePowerBand[][]): EEGRelativePowerBand[] =>
           Object.keys(POWER_BANDS).map( (k): EEGRelativePowerBand => {
             return {
               band: POWER_BANDS[k],
-              power: recordings.map(
-                  (recording: EEGRelativePowerBand[]): number => {
-                    let bandRecording = recording.find( r => r.band.id == POWER_BANDS[k].id );
-                    if (bandRecording) {
-                      return bandRecording.power;
+              power: sessions.map(
+                  (session: EEGRelativePowerBand[]): number => {
+                    let bandSession = session.find( r => r.band.id == POWER_BANDS[k].id );
+                    if (bandSession) {
+                      return bandSession.power;
                     } else {
                       return NaN;
                     }
                   }
                 ).reduce(
-                  ((sumOfRecordings, bandRecordingValue) =>
-                    sumOfRecordings += bandRecordingValue
+                  ((sumOfSessions, bandSessionValue) =>
+                    sumOfSessions += bandSessionValue
                   ), 0
-                ) / recordings.length
+                ) / sessions.length
             };
           })
         )
@@ -107,18 +107,20 @@ export default class MuseRecorder extends Vue {
           return arbps;
         })
       ).subscribe(
-        (arbps) => this.currentRecording.push(arbps)
+        (arbps) => this.currentSession.push(arbps)
       );
-    this.recordingInProgress = true;
+    this.sessionInProgress = true;
   }
 
-  private stopRecording() {
-    this.currentRecordingSubscription.unsubscribe();
-    this.recordingInProgress = false;
+  private stopSession() {
+    if (this.currentSessionSubscription) {
+      this.currentSessionSubscription.unsubscribe();
+    }
+    this.sessionInProgress = false;
   }
 
   private beforeDestroy() {
-    this.stopRecording();
+    this.stopSession();
   }
 }
 </script>

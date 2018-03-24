@@ -1,12 +1,12 @@
 <template>
-  <div class="muse-recorder__recording">
+  <div class="muse-recorder__session">
     <svg
-      class="recording__chart"
+      class="session__chart"
       :width="width"
       :height="height"
     >
       <path
-        :class="['recording__serie', 'recording__serie--' + serie.toLowerCase()]"
+        :class="['session__serie', 'session__serie--' + serie.toLowerCase()]"
         v-for="serie in series"
         :key="serie"
         :d="lineForSerie(serie)"
@@ -27,9 +27,9 @@ import { scaleLinear } from 'd3-scale';
 import { saveAs } from 'file-saver';
 
 @Component
-export default class Recording extends Vue {
+export default class Session extends Vue {
   @Prop({ default: [] })
-  recordingData: AveragedRelativeBandPowers[];
+  sessionData: AveragedRelativeBandPowers[];
   
   @Prop({ default: 800 })
   width: number;
@@ -38,12 +38,12 @@ export default class Recording extends Vue {
   height: number;
 
   get series(): string[] {
-    return Object.keys(this.recordingData[0] || {});
+    return Object.keys(this.sessionData[0] || {});
   }
 
   get xScale() {
     return scaleLinear()
-      .domain([0, this.recordingData.length - 1])
+      .domain([0, this.sessionData.length - 1])
       .range([0, this.width]);
   }
 
@@ -54,7 +54,7 @@ export default class Recording extends Vue {
   }
 
   private lineForSerie(serie: string): string | null {
-    return line()(this.recordingData.map(
+    return line()(this.sessionData.map(
       (v, i) => [
         this.xScale(i),
         this.yScale(v[serie])
@@ -64,7 +64,7 @@ export default class Recording extends Vue {
 
   private saveAsJSON(): void {
     let blob = new Blob(
-      [JSON.stringify(this.recordingData, null, 2)],
+      [JSON.stringify(this.sessionData, null, 2)],
       {type: "application/json;charset=utf-8"}
     );
     let exportDate = new Date();
@@ -75,25 +75,25 @@ export default class Recording extends Vue {
 </script>
 
 <style scoped lang="scss">
-.recording__serie {
+.session__serie {
   stroke: black;
   stroke-width: 2px;
   fill: none;
 }
 
-.recording__serie--delta {
+.session__serie--delta {
   stroke: gray;
 }
-.recording__serie--theta {
+.session__serie--theta {
   stroke: aqua;
 }
-.recording__serie--alpha {
+.session__serie--alpha {
   stroke: blue;
 }
-.recording__serie--beta {
+.session__serie--beta {
   stroke: red;
 }
-.recording__serie--gamma {
+.session__serie--gamma {
   stroke: orange;
 }
 
