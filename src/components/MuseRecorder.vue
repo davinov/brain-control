@@ -108,7 +108,7 @@ export default class MuseRecorder extends Vue {
           return arbps;
         })
       ).subscribe(
-        (arbps) => this.currentSession.push(arbps)
+        (arbps) => this.currentSession.push(Object.freeze(arbps))
       );
     this.sessionInProgress = true;
   }
