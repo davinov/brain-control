@@ -24,12 +24,13 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { line, lineRadial } from 'd3-shape';
-import { interpolateString } from 'd3-interpolate';
+import { line, lineRadial, arc, curveCardinal, curveNatural, curveMonotoneX } from 'd3-shape';
+import { interpolateString, interpolateNumber } from 'd3-interpolate';
+import { easeQuadInOut, easeCubicOut, easeCubicIn, easeCubic } from 'd3-ease';
 
 @Component
 export default class Vizualisation extends Vue {
-  k: number = 0;
+  k: number = 1;
 
   @Prop({ default: 800 })
   height: number;
@@ -41,38 +42,128 @@ export default class Vizualisation extends Vue {
     return `translate(${this.width / 2}, ${this.height / 2})`;
   }
 
-  get interpolator() {
-    return interpolateString(
-      this.flowingBrainWire(),
-      this.focusedBrainWire()
-    );
-  }
+  // get interpolator() {
+  //   return interpolateString(
+  //     this.horitzontalToCircle(),
+  //     this.horizontalBrainWireFocused(),
+  //     // this.flowingArcBrainWire(),
+  //     // this.focusedArcBrainWire()
+  //   );
+  // }
 
   get path () {
-    return this.interpolator(this.k);
+    return this.horitzontalToCircle(this.k);
+    // return this.interpolator(this.k);
   }
 
   // A straight horizontal line
-  flowingBrainWire () {
+  horizontalBrainWireFlat () {
     return line()([
-      [0, 0],
-      [this.width / 2, 0],
-      [0, 0],
       [- this.width / 2, 0],
       [0, 0],
+      [this.width / 2, 0]
     ]) || '';
   }
 
   // A square centered on the origin
-  focusedBrainWire () {
+  horizontalBrainWireFocused () {
     let radius = (this.height + this.width) / 5; 
-    return lineRadial()([
-      [0, radius],
-      [1/2 * Math.PI, radius],
-      [Math.PI, radius],
-      [3/2 * Math.PI, radius],
-      [2 * Math.PI, radius],
-    ]) || '';
+    // return lineRadial()
+    // .curve(curveCatmullRom.alpha(1))([
+    //   [0, radius],
+    //   [1/2 * Math.PI, radius],
+    //   [Math.PI, radius],
+    //   [3/2 * Math.PI, radius],
+    //   [2 * Math.PI, radius],
+    // ]) || '';
+    return line()([
+      [- radius / 2, 0],
+      [0, - radius / 2],
+      [radius / 2, 0]
+    ]) || ''
+  }
+
+  horitzontalToCircle (k: number) {
+    let verticalSpan = k * this.height / 2;
+    let horizontalSpan = (1 - k / 2 ) * this.width / 2;
+    return line().curve(
+      curveNatural
+    )([
+      this.leftPoint(k),
+      this.leftMiddlePoint(k),
+      this.middlePoint(k),
+      this.rightMiddlePoint(k),
+      this.rightPoint(k),
+    ]) || ''
+  }
+
+  get radius () {
+    return Math.sqrt(
+      Math.pow((this.width / 2), 2) + Math.pow((this.height / 2), 2)
+    ) / 2;
+  }
+
+  leftPoint (k: number): [number, number] {
+    return [
+      interpolateNumber(- this.width / 2, - this.radius)(easeCubicIn(k))
+    ,
+      0
+    ]
+  }
+
+  leftMiddlePoint (k: number): [number, number] {
+    return [
+      interpolateNumber(- this.width / 4, - this.radius * Math.SQRT2 / 2)(easeCubicIn(k))
+    ,
+      interpolateNumber(0, - this.radius * Math.SQRT2 / 2)(easeCubic(k))
+    ]
+  }
+
+  middlePoint (k: number): [number, number] {
+    return [
+      0
+    ,
+      interpolateNumber(0, - this.radius)(easeCubicOut(k))
+    ]
+  }
+
+  rightMiddlePoint (k: number): [number, number] {
+    return [
+      interpolateNumber(this.width / 4, this.radius * Math.SQRT2 / 2)(easeCubicIn(k))
+    ,
+      interpolateNumber(0, - this.radius * Math.SQRT2 / 2)(easeCubic(k))
+    ]
+  }
+
+  rightPoint (k: number): [number, number] {
+    return [
+      interpolateNumber(this.width / 2, this.radius)(easeCubicIn(k))
+    ,
+      0
+    ]
+  }
+
+
+  // A circle centered on the origin
+  focusedArcBrainWire () {
+    let radius = (this.height + this.width) / 5; 
+    return arc()({
+      innerRadius: radius,
+      outerRadius: radius,
+      startAngle: 0,
+      endAngle: 2 * Math.PI
+    }) || '';
+  }
+
+  // A circle centered on the origin
+  flowingArcBrainWire () {
+    // let radius = (this.height + this.width) / 5; 
+    return arc()({
+      innerRadius: 0,
+      outerRadius: this.width / 2,
+      startAngle: Math.PI,
+      endAngle: - Math.PI
+    }) || '';
   }
 }
 </script>
