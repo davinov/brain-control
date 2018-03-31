@@ -1,6 +1,27 @@
 <template>
   <div class="muse-recorder">
-    <visualization></visualization>
+    <div>
+      <input
+        type="range"
+        v-model.number="k1"
+        min="0"
+        max="1"
+        step="0.01"
+      />
+      <pre>{{ k1 }}</pre>
+      <input
+        type="range"
+        v-model.number="k2"
+        min="0"
+        max="1"
+        step="0.01"
+      />
+      <pre>{{ k2 }}</pre>
+    </div>
+    <visualization
+      :k1="k1"
+      :k2="k2"
+    ></visualization>
 
     <div class="muse-recorder__connection">
       <div
@@ -64,6 +85,9 @@ export default class MuseRecorder extends Vue {
 
   private currentSession: AveragedRelativeBandPowers[] = [];
 
+  private k1: number = 1;
+  private k2: number = 1;
+
   private created() {
     this.museClient = new MuseClient();
   }
@@ -111,7 +135,19 @@ export default class MuseRecorder extends Vue {
           return arbps;
         })
       ).subscribe(
-        (arbps) => this.currentSession.push(Object.freeze(arbps))
+        (arbps) => {
+          this.currentSession.push(Object.freeze(arbps));
+          this.k1 = (
+            arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
+          ) / (
+            Math.max(...this.currentSession.map( d => d.ALPHA )) + Math.min(...this.currentSession.map( d => d.ALPHA ))
+          );
+          this.k2 = (
+            arbps.GAMMA - Math.min(...this.currentSession.map( d => d.GAMMA ))
+          ) / (
+            Math.max(...this.currentSession.map( d => d.GAMMA )) + Math.min(...this.currentSession.map( d => d.GAMMA ))
+          );
+        }
       );
     this.sessionInProgress = true;
   }

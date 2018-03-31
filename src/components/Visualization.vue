@@ -1,53 +1,75 @@
 <template>
-  <div>
-    <input
-      type="range"
-      v-model="k1"
-      min="0"
-      max="1"
-      step="0.01"
-    />
-    <pre>{{ k1 }}</pre>
-    <input
-      type="range"
-      v-model="k2"
-      min="0"
-      max="1"
-      step="0.01"
-    />
-    <pre>{{ k2 }}</pre>
-    <svg
-      class="brain-visualization"
-      :height="height"
-      :width="width"
+  <svg
+    class="brain-visualization"
+    :height="height"
+    :width="width"
+  >
+    <g
+      class="brain-wires"
+      v-for="(wire, i) in brainWires(tk1, tk2)"
+      :key="i"
     >
-      <g
-        class="brain-wires"
-        v-for="(wire, i) in brainWires()"
+      <path
+        v-for="(path, i) in wire"
         :key="i"
-      >
-        <path
-          v-for="(path, i) in wire"
-          :key="i"
-          class="brain-wire"
-          :transform="originTranslation"
-          :d="path"
-        ></path>
-      </g>
-    </svg>
-  </div>
+        class="brain-wire"
+        :transform="originTranslation"
+        :d="path"
+      ></path>
+    </g>
+  </svg>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { line, lineRadial, arc, curveCardinal, curveNatural, curveMonotoneX, curveBasis } from 'd3-shape';
-import { interpolateString, interpolateNumber } from 'd3-interpolate';
-import { easeQuadInOut, easeCubicOut, easeCubicIn, easeCubic, easeCircle } from 'd3-ease';
+import { interpolateString, interpolateNumber, interpolate } from 'd3-interpolate';
+import { easeCubicOut, easeCubicIn, easeCubic, easeCircle } from 'd3-ease';
 
 @Component
 export default class Vizualisation extends Vue {
-  k1: number = 1;
-  k2: number = 1;
+  @Prop({ default: 1 })
+  k1: number;
+
+  @Prop({ default: 1 })
+  k2: number;
+
+  tk1: number = this.k1;
+  tk2: number = this.k2;
+
+  @Watch('k1')
+  animateK1 (targetVal: number) {
+    let duration = 1000;
+    let start = Date.now();
+    let interpolator = interpolateNumber(this.tk1 as number, targetVal);
+    let animate = () => {
+      let t = (Date.now() - start) / duration;
+      if (t >= 1) {
+        this.tk1 = targetVal;
+      } else {
+        requestAnimationFrame(animate);
+        this.tk1 = interpolator(t);
+      }
+    }
+    animate();
+  }
+
+  @Watch('k2')
+  animateK2 (targetVal: number) {
+    let duration = 1000;
+    let start = Date.now();
+    let interpolator = interpolateNumber(this.tk2 as number, targetVal);
+    let animate = () => {
+      let t = (Date.now() - start) / duration;
+      if (t >= 1) {
+        this.tk2 = targetVal;
+      } else {
+        requestAnimationFrame(animate);
+        this.tk2 = interpolator(t);
+      }
+    }
+    animate();
+  }
 
   @Prop({ default: 800 })
   height: number;
@@ -59,9 +81,9 @@ export default class Vizualisation extends Vue {
     return `translate(${this.width / 2}, ${this.height / 2})`;
   }
 
-  brainWires () {
+  brainWires (k1: number, k2: number) {
     return [0, 1/4, 1/2, 3/4, 1].map(y => this.brainWire(
-      +this.k1 + easeCircle(y) * (+this.k2 - +this.k1)
+      k1 + easeCircle(y) * (k2 - k1)
     , y))
   }
 
@@ -130,14 +152,12 @@ export default class Vizualisation extends Vue {
     return this.verticalSymetry(this.leftPoint(k, y));
   }
 
-  // Symetric against the vertical axis
   verticalSymetry (point: [number, number]): [number, number] {
     return [
       -point[0], point[1]
     ]
   }
 
-  // Symetric against the horizontal axis
   horizontalSymetry (point: [number, number]): [number, number] {
     return [
       point[0], -point[1]
