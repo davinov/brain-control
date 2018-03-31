@@ -8,20 +8,25 @@
       step="0.01"
     />
     <pre>{{ k }}</pre>
+    <input
+      type="range"
+      v-model="y"
+      min="0"
+      max="1"
+      step="0.01"
+    />
+    <pre>{{ y }}</pre>
     <svg
       class="brain-visualization"
       :height="height"
       :width="width"
     >
       <path
+        v-for="(path, i) in brainWire"
+        :key="i"
         class="brain-wire"
         :transform="originTranslation"
         :d="path"
-      ></path>
-      <path
-        class="brain-wire"
-        :transform="originTranslation"
-        :d="path2"
       ></path>
     </svg>
   </div>
@@ -29,13 +34,14 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { line, lineRadial, arc, curveCardinal, curveNatural, curveMonotoneX } from 'd3-shape';
+import { line, lineRadial, arc, curveCardinal, curveNatural, curveMonotoneX, curveBasis } from 'd3-shape';
 import { interpolateString, interpolateNumber } from 'd3-interpolate';
 import { easeQuadInOut, easeCubicOut, easeCubicIn, easeCubic } from 'd3-ease';
 
 @Component
 export default class Vizualisation extends Vue {
   k: number = 1;
+  y: number = 1;
 
   @Prop({ default: 800 })
   height: number;
@@ -49,28 +55,27 @@ export default class Vizualisation extends Vue {
 
   // get interpolator() {
   //   return interpolateString(
-  //     this.horitzontalToCircle(),
+  //     this.wirePoints(),
   //     this.horizontalBrainWireFocused(),
   //     // this.flowingArcBrainWire(),
   //     // this.focusedArcBrainWire()
   //   );
   // }
 
-  get path () {
-    return line().curve(
-      curveNatural
-    )(
-      this.horitzontalToCircle(this.k)
-    ) || '';
-    // return this.interpolator(this.k);
-  }
 
-  get path2 () {
-    return line().curve(
-      curveNatural
-    )(
-      this.horitzontalToCircle(this.k).map(this.symetricHorizontal).reverse()
-    ) || '';
+  // A brain wire is made of two vertically symetric pathes
+  get brainWire () {
+    let curve = line().curve(
+      curveCardinal.tension(this.y)
+    );
+
+    return [
+      curve(this.wirePoints(this.k, this.y))
+    ,
+      curve(
+        this.wirePoints(this.k, this.y).map(this.symetricHorizontal).reverse()
+      )
+    ]
   }
 
   // A straight horizontal line
@@ -100,12 +105,12 @@ export default class Vizualisation extends Vue {
     ]) || ''
   }
 
-  horitzontalToCircle (k: number) {
+  wirePoints (k: number, y: number) {
     return [
       this.leftPoint(k),
-      this.leftMiddlePoint(k),
+      this.leftMiddlePoint(k, y),
       this.middlePoint(k),
-      this.rightMiddlePoint(k),
+      this.rightMiddlePoint(k, y),
       this.rightPoint(k),
     ];
   }
@@ -124,11 +129,13 @@ export default class Vizualisation extends Vue {
     ]
   }
 
-  leftMiddlePoint (k: number): [number, number] {
+  leftMiddlePoint (k: number, y: number): [number, number] {
+    let circleOrSquareRatio = interpolateNumber(Math.SQRT2 / 2, 1 / 2);
+
     return [
-      interpolateNumber(- this.width / 4, - this.radius * Math.SQRT2 / 2)(easeCubicIn(k))
+      interpolateNumber(- this.width / 4, - this.radius * circleOrSquareRatio(y))(easeCubicIn(k))
     ,
-      interpolateNumber(0, - this.radius * Math.SQRT2 / 2)(easeCubic(k))
+      interpolateNumber(0, - this.radius * circleOrSquareRatio(y))(easeCubic(k))
     ]
   }
 
@@ -140,8 +147,8 @@ export default class Vizualisation extends Vue {
     ]
   }
 
-  rightMiddlePoint (k: number): [number, number] {
-    return this.symetricVertical(this.leftMiddlePoint(k));
+  rightMiddlePoint (k: number, y: number): [number, number] {
+    return this.symetricVertical(this.leftMiddlePoint(k, y));
   }
 
   rightPoint (k: number): [number, number] {
