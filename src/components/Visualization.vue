@@ -21,13 +21,19 @@
       :height="height"
       :width="width"
     >
-      <path
-        v-for="(path, i) in brainWire"
+      <g
+        class="brain-wires"
+        v-for="(wire, i) in brainWires()"
         :key="i"
-        class="brain-wire"
-        :transform="originTranslation"
-        :d="path"
-      ></path>
+      >
+        <path
+          v-for="(path, i) in wire"
+          :key="i"
+          class="brain-wire"
+          :transform="originTranslation"
+          :d="path"
+        ></path>
+      </g>
     </svg>
   </div>
 </template>
@@ -63,17 +69,21 @@ export default class Vizualisation extends Vue {
   // }
 
 
+  brainWires () {
+    return [0, 1/4, 1/2, 3/4, 1].map(y => this.brainWire(this.k, y))
+  }
+
   // A brain wire is made of two vertically symetric pathes
-  get brainWire () {
+  brainWire (k: number, y: number) {
     let curve = line().curve(
-      curveCardinal.tension(this.y)
+      curveCardinal.tension(y)
     );
 
     return [
-      curve(this.wirePoints(this.k, this.y))
+      curve(this.wirePoints(k, y))
     ,
       curve(
-        this.wirePoints(this.k, this.y).map(this.symetricHorizontal).reverse()
+        this.wirePoints(k, y).map(this.horizontalSymetry).reverse()
       )
     ]
   }
@@ -112,7 +122,7 @@ export default class Vizualisation extends Vue {
       this.middlePoint(k),
       this.rightMiddlePoint(k, y),
       this.rightPoint(k),
-    ];
+    ].map(this.verticalTranslation(- y * this.height / 3));
   }
 
   get radius () {
@@ -148,27 +158,34 @@ export default class Vizualisation extends Vue {
   }
 
   rightMiddlePoint (k: number, y: number): [number, number] {
-    return this.symetricVertical(this.leftMiddlePoint(k, y));
+    return this.verticalSymetry(this.leftMiddlePoint(k, y));
   }
 
   rightPoint (k: number): [number, number] {
-    return this.symetricVertical(this.leftPoint(k));
+    return this.verticalSymetry(this.leftPoint(k));
   }
 
   // Symetric against the vertical axis
-  symetricVertical (point: [number, number]): [number, number] {
+  verticalSymetry (point: [number, number]): [number, number] {
     return [
       -point[0], point[1]
     ]
   }
 
   // Symetric against the horizontal axis
-  symetricHorizontal (point: [number, number]): [number, number] {
+  horizontalSymetry (point: [number, number]): [number, number] {
     return [
       point[0], -point[1]
     ]
   }
 
+  verticalTranslation (dy: number) {
+    return function(point: [number, number]): [number, number] {
+      return [
+        point[0], dy + point[1]
+      ]
+    }
+  }
 
   // A circle centered on the origin
   focusedArcBrainWire () {
@@ -202,5 +219,6 @@ export default class Vizualisation extends Vue {
 .brain-wire {
   stroke: white;
   stroke-width: 3px;
+  fill: none;
 }
 </style>
