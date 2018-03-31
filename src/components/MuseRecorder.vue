@@ -1,5 +1,6 @@
 <template>
   <div class="muse-recorder">
+    <visualization></visualization>
 
     <div class="muse-recorder__connection">
       <div
@@ -43,6 +44,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { bufferCount, map } from 'rxjs/operators';
 import Session from './Session.vue';
+import Visualization from './Visualization.vue';
 
 export interface AveragedRelativeBandPowers {
   [index: string]: number;
@@ -50,7 +52,8 @@ export interface AveragedRelativeBandPowers {
 
 @Component({
   components: {
-    Session
+    Session,
+    Visualization
   }
 })
 export default class MuseRecorder extends Vue {
