@@ -105,7 +105,7 @@ export default class Vizualisation extends Vue {
   }
 
   leftMiddlePoint (k: number, y: number): [number, number] {
-    let circleOrSquareRatio = interpolateNumber(Math.SQRT2 / 2, 1 / 2);
+    let circleOrSquareRatio = interpolateNumber(Math.SQRT2 / 2, 1);
 
     return [
       interpolateNumber(- this.width / 4, - this.radius * circleOrSquareRatio(y))(easeCubicIn(k))
