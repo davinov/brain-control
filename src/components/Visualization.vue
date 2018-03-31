@@ -18,6 +18,11 @@
         :transform="originTranslation"
         :d="path"
       ></path>
+      <path
+        class="brain-wire"
+        :transform="originTranslation"
+        :d="path2"
+      ></path>
     </svg>
   </div>
 </template>
@@ -52,8 +57,20 @@ export default class Vizualisation extends Vue {
   // }
 
   get path () {
-    return this.horitzontalToCircle(this.k);
+    return line().curve(
+      curveNatural
+    )(
+      this.horitzontalToCircle(this.k)
+    ) || '';
     // return this.interpolator(this.k);
+  }
+
+  get path2 () {
+    return line().curve(
+      curveNatural
+    )(
+      this.horitzontalToCircle(this.k).map(this.symetricHorizontal).reverse()
+    ) || '';
   }
 
   // A straight horizontal line
@@ -84,17 +101,13 @@ export default class Vizualisation extends Vue {
   }
 
   horitzontalToCircle (k: number) {
-    let verticalSpan = k * this.height / 2;
-    let horizontalSpan = (1 - k / 2 ) * this.width / 2;
-    return line().curve(
-      curveNatural
-    )([
+    return [
       this.leftPoint(k),
       this.leftMiddlePoint(k),
       this.middlePoint(k),
       this.rightMiddlePoint(k),
       this.rightPoint(k),
-    ]) || ''
+    ];
   }
 
   get radius () {
@@ -128,18 +141,24 @@ export default class Vizualisation extends Vue {
   }
 
   rightMiddlePoint (k: number): [number, number] {
-    return [
-      interpolateNumber(this.width / 4, this.radius * Math.SQRT2 / 2)(easeCubicIn(k))
-    ,
-      interpolateNumber(0, - this.radius * Math.SQRT2 / 2)(easeCubic(k))
-    ]
+    return this.symetricVertical(this.leftMiddlePoint(k));
   }
 
   rightPoint (k: number): [number, number] {
+    return this.symetricVertical(this.leftPoint(k));
+  }
+
+  // Symetric against the vertical axis
+  symetricVertical (point: [number, number]): [number, number] {
     return [
-      interpolateNumber(this.width / 2, this.radius)(easeCubicIn(k))
-    ,
-      0
+      -point[0], point[1]
+    ]
+  }
+
+  // Symetric against the horizontal axis
+  symetricHorizontal (point: [number, number]): [number, number] {
+    return [
+      point[0], -point[1]
     ]
   }
 
