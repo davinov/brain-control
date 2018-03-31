@@ -2,20 +2,20 @@
   <div>
     <input
       type="range"
-      v-model="k"
+      v-model="k1"
       min="0"
       max="1"
       step="0.01"
     />
-    <pre>{{ k }}</pre>
+    <pre>{{ k1 }}</pre>
     <input
       type="range"
-      v-model="y"
+      v-model="k2"
       min="0"
       max="1"
       step="0.01"
     />
-    <pre>{{ y }}</pre>
+    <pre>{{ k2 }}</pre>
     <svg
       class="brain-visualization"
       :height="height"
@@ -42,12 +42,12 @@
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { line, lineRadial, arc, curveCardinal, curveNatural, curveMonotoneX, curveBasis } from 'd3-shape';
 import { interpolateString, interpolateNumber } from 'd3-interpolate';
-import { easeQuadInOut, easeCubicOut, easeCubicIn, easeCubic } from 'd3-ease';
+import { easeQuadInOut, easeCubicOut, easeCubicIn, easeCubic, easeCircle } from 'd3-ease';
 
 @Component
 export default class Vizualisation extends Vue {
-  k: number = 1;
-  y: number = 1;
+  k1: number = 1;
+  k2: number = 1;
 
   @Prop({ default: 800 })
   height: number;
@@ -59,18 +59,10 @@ export default class Vizualisation extends Vue {
     return `translate(${this.width / 2}, ${this.height / 2})`;
   }
 
-  // get interpolator() {
-  //   return interpolateString(
-  //     this.wirePoints(),
-  //     this.horizontalBrainWireFocused(),
-  //     // this.flowingArcBrainWire(),
-  //     // this.focusedArcBrainWire()
-  //   );
-  // }
-
-
   brainWires () {
-    return [0, 1/4, 1/2, 3/4, 1].map(y => this.brainWire(this.k, y))
+    return [0, 1/4, 1/2, 3/4, 1].map(y => this.brainWire(
+      +this.k1 + easeCircle(y) * (+this.k2 - +this.k1)
+    , y))
   }
 
   // A brain wire is made of two vertically symetric pathes
@@ -88,41 +80,14 @@ export default class Vizualisation extends Vue {
     ]
   }
 
-  // A straight horizontal line
-  horizontalBrainWireFlat () {
-    return line()([
-      [- this.width / 2, 0],
-      [0, 0],
-      [this.width / 2, 0]
-    ]) || '';
-  }
-
-  // A square centered on the origin
-  horizontalBrainWireFocused () {
-    let radius = (this.height + this.width) / 5; 
-    // return lineRadial()
-    // .curve(curveCatmullRom.alpha(1))([
-    //   [0, radius],
-    //   [1/2 * Math.PI, radius],
-    //   [Math.PI, radius],
-    //   [3/2 * Math.PI, radius],
-    //   [2 * Math.PI, radius],
-    // ]) || '';
-    return line()([
-      [- radius / 2, 0],
-      [0, - radius / 2],
-      [radius / 2, 0]
-    ]) || ''
-  }
-
   wirePoints (k: number, y: number) {
     return [
-      this.leftPoint(k),
+      this.leftPoint(k, y),
       this.leftMiddlePoint(k, y),
-      this.middlePoint(k),
+      this.middlePoint(k, y),
       this.rightMiddlePoint(k, y),
-      this.rightPoint(k),
-    ].map(this.verticalTranslation(- y * this.height / 3));
+      this.rightPoint(k, y),
+    ].map(this.verticalTranslation(- y * this.radius));
   }
 
   get radius () {
@@ -131,11 +96,11 @@ export default class Vizualisation extends Vue {
     ) / 2;
   }
 
-  leftPoint (k: number): [number, number] {
+  leftPoint (k: number, y: number): [number, number] {
     return [
       interpolateNumber(- this.width / 2, - this.radius)(easeCubicIn(k))
     ,
-      0
+      interpolateNumber(0, this.radius)( y * k )
     ]
   }
 
@@ -145,15 +110,15 @@ export default class Vizualisation extends Vue {
     return [
       interpolateNumber(- this.width / 4, - this.radius * circleOrSquareRatio(y))(easeCubicIn(k))
     ,
-      interpolateNumber(0, - this.radius * circleOrSquareRatio(y))(easeCubic(k))
+      interpolateNumber(0, - this.radius * circleOrSquareRatio(y))(easeCubic(k)) + interpolateNumber(0, this.radius)( y * k )
     ]
   }
 
-  middlePoint (k: number): [number, number] {
+  middlePoint (k: number, y: number): [number, number] {
     return [
       0
     ,
-      interpolateNumber(0, - this.radius)(easeCubicOut(k))
+      interpolateNumber(0, - this.radius)(easeCubicOut(k)) + interpolateNumber(0, this.radius)( y * k )
     ]
   }
 
@@ -161,8 +126,8 @@ export default class Vizualisation extends Vue {
     return this.verticalSymetry(this.leftMiddlePoint(k, y));
   }
 
-  rightPoint (k: number): [number, number] {
-    return this.verticalSymetry(this.leftPoint(k));
+  rightPoint (k: number, y: number): [number, number] {
+    return this.verticalSymetry(this.leftPoint(k, y));
   }
 
   // Symetric against the vertical axis
@@ -185,28 +150,6 @@ export default class Vizualisation extends Vue {
         point[0], dy + point[1]
       ]
     }
-  }
-
-  // A circle centered on the origin
-  focusedArcBrainWire () {
-    let radius = (this.height + this.width) / 5; 
-    return arc()({
-      innerRadius: radius,
-      outerRadius: radius,
-      startAngle: 0,
-      endAngle: 2 * Math.PI
-    }) || '';
-  }
-
-  // A circle centered on the origin
-  flowingArcBrainWire () {
-    // let radius = (this.height + this.width) / 5; 
-    return arc()({
-      innerRadius: 0,
-      outerRadius: this.width / 2,
-      startAngle: Math.PI,
-      endAngle: - Math.PI
-    }) || '';
   }
 }
 </script>
