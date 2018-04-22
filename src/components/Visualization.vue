@@ -4,17 +4,24 @@
     :height="height"
     :width="width"
   >
+    <defs>
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -18" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+      </filter>
+    </defs>
     <g
       class="brain-wires"
-      v-for="(wire, i) in brainWires(tk1, tk2)"
-      :key="i"
     >
       <path
-        v-for="(path, i) in wire"
+        filter="url(#goo)"
+        v-for="(wire, i) in brainWires(tk1, tk2)"
         :key="i"
         class="brain-wire"
         :transform="originTranslation"
-        :d="path"
+        :d="wire"
+        :fill="colors[i]"
       ></path>
     </g>
   </svg>
@@ -36,6 +43,9 @@ export default class Vizualisation extends Vue {
 
   tk1: number = this.k1;
   tk2: number = this.k2;
+
+  colors = ['#00f', '#0f0', '#f00'];
+  // colors = ['cyan', 'magenta', 'yellow'];
 
   @Watch('k1')
   animateK1 (targetVal: number) {
@@ -78,38 +88,45 @@ export default class Vizualisation extends Vue {
   width: number;
 
   get originTranslation () {
-    return `translate(${this.width / 2}, ${this.height / 2})`;
+    return `translate(${this.width / 2}, ${this.height})`;
   }
 
   brainWires (k1: number, k2: number) {
-    return [0, 1/4, 1/2, 3/4, 1].map(y => this.brainWire(
-      k1 + easeCircle(y) * (k2 - k1)
-    , y))
+    return [-1/2, 0, 1/2].map(y => this.brainWire(k1, k2, y))
   }
 
-  // A brain wire is made of two vertically symetric pathes
-  brainWire (k: number, y: number) {
+  brainWire (k1: number, k2: number, y: number) {
     let curve = line().curve(
       curveCardinal.tension(y)
     );
 
-    return [
-      curve(this.wirePoints(k, y))
-    ,
-      curve(
-        this.wirePoints(k, y).map(this.horizontalSymetry).reverse()
-      )
-    ]
+    return curve(this.wirePoints(k1, k2, y));
   }
 
-  wirePoints (k: number, y: number) {
-    return [
+  wirePoints (k1: number, k2: number, y: number) {
+    let k = k1 + easeCircle(y) * (k2 - k1);
+
+    let masterPoints = [
       this.leftPoint(k, y),
       this.leftMiddlePoint(k, y),
       this.middlePoint(k, y),
       this.rightMiddlePoint(k, y),
       this.rightPoint(k, y),
-    ].map(this.verticalTranslation(- y * this.radius));
+    ]
+
+    let wireWidth = 100;
+
+    let points = masterPoints.map(
+      (p): [number, number] => [p[0], p[1] + wireWidth / 2]
+    ).concat(
+      masterPoints.reverse().map(
+        (p): [number, number] => [p[0], - p[1] - wireWidth / 2]
+      )
+    );
+
+    points.push(points[0]);
+
+    return points.map(this.verticalTranslation(- this.width / 2 - (1 - Math.max(k1, k2)) * 2 * y * this.radius));
   }
 
   get radius () {
@@ -180,8 +197,6 @@ export default class Vizualisation extends Vue {
 }
 
 .brain-wire {
-  stroke: white;
-  stroke-width: 3px;
-  fill: none;
+  mix-blend-mode: screen;
 }
 </style>
