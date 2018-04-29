@@ -165,6 +165,7 @@ export default class MuseRecorder extends Vue {
         }
       );
     this.sessionInProgress = true;
+    this.paused = false;
   }
 
   private stopSession() {
@@ -172,6 +173,7 @@ export default class MuseRecorder extends Vue {
       this.currentSessionSubscription.unsubscribe();
     }
     this.sessionInProgress = false;
+    this.paused = true;
   }
 
   private beforeDestroy() {

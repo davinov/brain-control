@@ -21,7 +21,7 @@ const SQUARE_SIZE = CAMERA_DISTANCE;
 const SQUARE_RADIUS = SQUARE_SIZE / 2;
 
 const POINTS_COUNT = 1000
-const POINTS_RENEWAL_CHANCE = 0.0001;
+const POINTS_RENEWAL_CHANCE = 0.001;
 
 @Component
 export default class ParticlesVizualisation extends Vue {
@@ -137,6 +137,7 @@ export default class ParticlesVizualisation extends Vue {
       if (Math.random() <= POINTS_RENEWAL_CHANCE) {
         let v = this.randomPositionOnPlane();
         vertice.set(v.x, v.y, v.z);
+        this.geometry.verticesNeedUpdate = true;
       }
     });
 
@@ -170,8 +171,8 @@ export default class ParticlesVizualisation extends Vue {
 
       particleColor.add(new THREE.Color(dX, dY, dZ));
     });
-
     this.geometry.colorsNeedUpdate = true;
+
     this.renderer.render(this.scene, this.camera);
     this.continue()
   }
