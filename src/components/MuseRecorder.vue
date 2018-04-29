@@ -1,6 +1,18 @@
 <template>
   <div class="muse-recorder">
     <div>
+      <particles-visualization
+        :k1="k1"
+        :k2="k2"
+        :paused="paused"
+      ></particles-visualization>
+    </div>
+
+    <div>
+      <button
+        @click="paused = !paused"
+      > Pause
+      </button>
       <input
         type="range"
         v-model.number="k1"
@@ -18,10 +30,10 @@
       />
       <pre>{{ k2 }}</pre>
     </div>
-    <visualization
+    <!-- <visualization
       :k1="k1"
       :k2="k2"
-    ></visualization>
+    ></visualization> -->
 
     <div class="muse-recorder__connection">
       <div
@@ -66,6 +78,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { bufferCount, map } from 'rxjs/operators';
 import Session from './Session.vue';
 import Visualization from './Visualization.vue';
+import ParticlesVisualization from './ParticlesVisualization.vue';
 
 export interface AveragedRelativeBandPowers {
   [index: string]: number;
@@ -74,7 +87,8 @@ export interface AveragedRelativeBandPowers {
 @Component({
   components: {
     Session,
-    Visualization
+    Visualization,
+    ParticlesVisualization,
   }
 })
 export default class MuseRecorder extends Vue {
@@ -85,8 +99,9 @@ export default class MuseRecorder extends Vue {
 
   private currentSession: AveragedRelativeBandPowers[] = [];
 
-  private k1: number = 1;
-  private k2: number = 1;
+  private k1: number = 0;
+  private k2: number = 0;
+  private paused: boolean = true;
 
   private created() {
     this.museClient = new MuseClient();
@@ -140,12 +155,12 @@ export default class MuseRecorder extends Vue {
           this.k1 = (
             arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
           ) / (
-            Math.max(...this.currentSession.map( d => d.ALPHA )) + Math.min(...this.currentSession.map( d => d.ALPHA ))
+            Math.max(...this.currentSession.map( d => d.ALPHA )) - Math.min(...this.currentSession.map( d => d.ALPHA ))
           );
           this.k2 = (
             arbps.GAMMA - Math.min(...this.currentSession.map( d => d.GAMMA ))
           ) / (
-            Math.max(...this.currentSession.map( d => d.GAMMA )) + Math.min(...this.currentSession.map( d => d.GAMMA ))
+            Math.max(...this.currentSession.map( d => d.GAMMA )) - Math.min(...this.currentSession.map( d => d.GAMMA ))
           );
         }
       );
