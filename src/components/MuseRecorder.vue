@@ -70,6 +70,7 @@
 </template>
 
 <script lang="ts">
+import _ from 'lodash';
 import { Component, Inject, Vue } from 'vue-property-decorator';
 import { MuseClient } from 'muse-js';
 import { EEGRelativePowerBand, POWER_BANDS, FrequencyBand } from 'muse-js/dist/lib/process-samples';
@@ -152,6 +153,7 @@ export default class MuseRecorder extends Vue {
       ).subscribe(
         (arbps) => {
           this.currentSession.push(Object.freeze(arbps));
+          this.currentSession = _.takeRight(this.currentSession, 100);
           this.k1 = (
             arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
           ) / (

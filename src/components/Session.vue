@@ -13,7 +13,18 @@
       ></path>
     </svg>
 
-    <button @click="saveAsJSON()">
+    <div class="session__legend">
+      <div
+        :class="['session__legend__item', 'session__legend__item--' + serie.toLowerCase()]"
+        v-for="serie in series"
+        :key="serie"
+      >
+        <div class="session__legend__item__color"></div>
+        <span>{{ serie }}</span>
+      </div>
+    </div>
+
+    <button @click="saveAsJSON()" style="flex: none; height: 2em;">
       Export session to JSON file
     </button>
   </div>
@@ -49,8 +60,8 @@ export default class Session extends Vue {
 
   get yScale() {
     return scaleLinear()
-      .domain([0, 1])
-      .range([0, this.height]);
+      .domain([0, 0.5])
+      .range([this.height, 0]);
   }
 
   private lineForSerie(serie: string): string | null {
@@ -75,10 +86,28 @@ export default class Session extends Vue {
 </script>
 
 <style scoped lang="scss">
+.muse-recorder__session {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-around;
+}
+
 .session__serie {
   stroke: black;
   stroke-width: 2px;
   fill: none;
+}
+
+.session__legend {
+  text-align: left;
+}
+
+.session__legend__item__color {
+  display: inline-block;
+  width: 1em;
+  height: 0.5em;
+  margin-right: 0.5em;
 }
 
 .session__serie--delta {
@@ -95,6 +124,22 @@ export default class Session extends Vue {
 }
 .session__serie--gamma {
   stroke: orange;
+}
+
+.session__legend__item--delta .session__legend__item__color {
+  background-color: gray;
+}
+.session__legend__item--theta .session__legend__item__color {
+  background-color: aqua;
+}
+.session__legend__item--alpha .session__legend__item__color {
+  background-color: blue;
+}
+.session__legend__item--beta .session__legend__item__color {
+  background-color: red;
+}
+.session__legend__item--gamma .session__legend__item__color {
+  background-color: orange;
 }
 
 </style>
