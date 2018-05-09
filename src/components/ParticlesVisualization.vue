@@ -8,7 +8,6 @@ import {
 } from 'three';
 
 import * as THREE from 'three';
-import { constants } from 'zlib';
 
 const CAMERA_DISTANCE = 200;
 const BOUNDS = {
@@ -288,7 +287,7 @@ export default class ParticlesVizualisation extends Vue {
   }
 
   destroyed () {
-    this.pause()
+    this.pause();
     this.renderer.dispose();
     this.geometry.dispose();
   }

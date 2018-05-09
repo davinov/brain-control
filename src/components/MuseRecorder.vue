@@ -1,14 +1,23 @@
 <template>
   <div class="muse-recorder">
     <div>
-      <particles-visualization
+      <!-- <visualization
+        :k1="k1"
+        :k2="k2"
+      ></visualization> -->
+      <!-- <particles-visualization
         :k1="k1"
         :k2="k2"
         :paused="paused"
-      ></particles-visualization>
+      ></particles-visualization> -->
+      <field-visualization
+        :k1="k1"
+        :k2="k2"
+        :paused="paused"
+      ></field-visualization>
     </div>
 
-    <div>
+    <div class="muse-recorder__controls">
       <button
         @click="paused = !paused"
       > Pause
@@ -30,10 +39,6 @@
       />
       <pre>{{ k2 }}</pre>
     </div>
-    <!-- <visualization
-      :k1="k1"
-      :k2="k2"
-    ></visualization> -->
 
     <div class="muse-recorder__connection">
       <div
@@ -80,6 +85,7 @@ import { bufferCount, map } from 'rxjs/operators';
 import Session from './Session.vue';
 import Visualization from './Visualization.vue';
 import ParticlesVisualization from './ParticlesVisualization.vue';
+import FieldVisualization from './FieldVisualization.vue';
 
 export interface AveragedRelativeBandPowers {
   [index: string]: number;
@@ -90,6 +96,7 @@ export interface AveragedRelativeBandPowers {
     Session,
     Visualization,
     ParticlesVisualization,
+    FieldVisualization,
   }
 })
 export default class MuseRecorder extends Vue {
@@ -102,7 +109,7 @@ export default class MuseRecorder extends Vue {
 
   private k1: number = 0;
   private k2: number = 0;
-  private paused: boolean = true;
+  private paused: boolean = false;
 
   private created() {
     this.museClient = new MuseClient();
@@ -185,5 +192,8 @@ export default class MuseRecorder extends Vue {
 </script>
 
 <style scoped lang="scss">
-
+.muse-recorder__controls {
+  position: absolute;
+  background: white;
+}
 </style>
