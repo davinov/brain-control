@@ -25,7 +25,7 @@ import createInputsModel from './createInputsModel';
 export default function initScene(gl) {
   // Canvas size management
   var canvasRect = { width: 0, height: 0, top: 0, left: 0 };
-  setWidthHeight(gl.canvas.width, gl.canvas.height);
+  setWidthHeight(window.innerWidth, window.innerHeight);
   window.addEventListener('resize', onResize, true);
 
   // TODO: It feels like bounding box management needs to be moved out from here.
@@ -225,7 +225,10 @@ export default function initScene(gl) {
   }
 
   function onResize() {
-    setWidthHeight(window.innerWidth, window.innerHeight);
+    setWidthHeight(
+      window.innerWidth,
+      window.innerHeight
+    );
 
     screenProgram.updateScreenTextures();
   }
@@ -233,17 +236,21 @@ export default function initScene(gl) {
   function setWidthHeight(w, h) {
     var dx = Math.max(w * 0.02, 30);
     var dy = Math.max(h * 0.02, 30);
-    canvasRect.width = w + 2 * dx;
-    canvasRect.height = h + 2 * dy;
+    let x = w + 2 * dx;
+    let y = h + 2 * dy;
+    canvasRect.width = window.devicePixelRatio * x;
+    canvasRect.height = window.devicePixelRatio * y;
     canvasRect.top = - dy;
     canvasRect.left = - dx;
 
 
     let canvas = gl.canvas;
-    canvas.width = canvasRect.width;
-    canvas.height = canvasRect.height;
+    canvas.style.width = x + 'px';
+    canvas.style.height = y + 'px';
     canvas.style.left = (-dx) + 'px';
     canvas.style.top = (-dy) + 'px';
+    canvas.width = canvasRect.width ;
+    canvas.height = canvasRect.height;
   }
 
   function dispose() {

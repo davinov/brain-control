@@ -19,19 +19,14 @@ export default class FieldVizualisation extends Vue {
   @Prop({ default: false })
   public paused: boolean;
 
-  private defaultVectorField = wrapVectorField(`v.x = 0.1 * p.y;
-  v.y = -0.2 * p.y;`);
-
   private timeStep: number = 0.01;
   private dropProbability: number = 0.009;
-  private particleCount: number = 5000;
+  private particleCount: number = 5000 * window.devicePixelRatio;
   private fadeout: number = .998;
   // private colorMode: number = ColorModes.UNIFORM;
 
   mounted () {
     let canvas: HTMLCanvasElement = this.$el;
-    canvas.width = window.innerWidth;
-    canvas.height =  window.innerHeight;
     let ctxOptions = { antialiasing: false };
     let gl = canvas.getContext('webgl', ctxOptions) ||
     canvas.getContext('experimental-webgl', ctxOptions);
