@@ -12,10 +12,6 @@ export default function makeScreenProgram(ctx) {
   var boundBoxTextureTransform = {dx: 0, dy: 0, scale: 1};
   var lastRenderedBoundingBox = null;
 
-  // TODO: Allow customization? Last time I tried, I didn't like it too much.
-  // It was very easy to screw up the design, and the tool looked ugly :-/
-  let backgroundColor = { r: 19/255, g: 41/255, b: 79/255, a: 1 };
-
   updateScreenTextures();
   var screenProgram = glUtils.createProgram(gl, getScreenVertexShader(), getScreenFragmentShader());
   
@@ -54,7 +50,7 @@ export default function makeScreenProgram(ctx) {
 
     gl.enable(gl.BLEND); 
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
+    gl.clearColor(ctx.backgroundColor.r, ctx.backgroundColor.g, ctx.backgroundColor.b, ctx.backgroundColor.a);
     gl.clear(gl.COLOR_BUFFER_BIT);
     drawTexture(screenTexture, 1.0, NO_TRANSFORM);
     gl.disable(gl.BLEND);

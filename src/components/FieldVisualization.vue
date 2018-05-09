@@ -33,12 +33,17 @@ export default class FieldVizualisation extends Vue {
 
     this.scene = initScene(gl);
     this.scene.setParticlesCount(this.particleCount);
+    this.scene.setBackgroundColor({
+      r: 0.05, g: 0, b: 0.1, a: 1
+    });
+    this.updateVectorField();
 
     this.scene.start();
   }
 
-  destroyed () {
+  beforeDestroy () {
     this.scene.dispose();
+    this.$el.remove();
   }
 
   formatNumberforGLSL (n: number): string {
@@ -46,9 +51,23 @@ export default class FieldVizualisation extends Vue {
   }
 
   get GLSLcode () {
+    // return `
+    //   v.x = ${this.formatNumberforGLSL(this.k1 / 5)} * p.y;
+    //   v.y = ${this.formatNumberforGLSL(this.k2 / 5)} * p.x;
+    // `;
+    // CIRCLE: alpha
+    let circle = {
+      x: `p.y`,
+      y: `-p.x`
+    }
+    // SQUARES: gamma
+    let squares = {
+      x: `sign(cos(p.y * 2.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * cos(p.y * 2.)`,
+      y: `sign(sin(p.x * 2.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.x * 2.)`
+    };
     return `
-      v.x = ${this.formatNumberforGLSL(this.k1 / 5)} * p.y;
-      v.y = ${this.formatNumberforGLSL(this.k2 / 5)} * p.x;
+      v.x = (pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.x})) + (pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.x}));
+      v.y = (pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.y})) + (pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.y}));
     `;
   }
 

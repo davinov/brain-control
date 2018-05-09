@@ -86,6 +86,8 @@ export default function initScene(gl) {
     // How quickly we should fade previous frame (from 0..1)
     fadeOpacity: appState.getFadeout(),
 
+    backgroundColor: { r: 0, g: 0, b: 0, a: 1 },
+
     // Ignore this one for a moment. Yes, the app support web audio API,
     // but it's rudimentary, so... shhh! it's a secret.
     // Don't shhh on me!
@@ -131,6 +133,8 @@ export default function initScene(gl) {
     vectorFieldEditorState,
 
     inputsModel,
+
+    setBackgroundColor,
 
     getCanvasRect() {
       // We trust they don't do anything bad with this ...
@@ -254,9 +258,9 @@ export default function initScene(gl) {
   }
 
   function dispose() {
-      stop();
-      window.removeEventListener('resize', onResize, true);
-      vectorFieldEditorState.dispose();
+    stop();
+    window.removeEventListener('resize', onResize, true);
+    vectorFieldEditorState.dispose();
   }
 
   function nextFrame() {
@@ -291,6 +295,11 @@ export default function initScene(gl) {
     // we create a square texture where each pixel will hold a particle position encoded as RGBA
     ctx.particleStateResolution = Math.ceil(Math.sqrt(numParticles));
     drawProgram.updateParticlesCount();
+  }
+
+  // backgroundColor should be an object with r, g, b, a properties (range: 0-1)
+  function setBackgroundColor(backgroundColor) {
+    ctx.backgroundColor = backgroundColor; 
   }
 
 }
