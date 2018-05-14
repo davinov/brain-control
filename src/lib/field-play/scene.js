@@ -9,14 +9,11 @@
  * Copyright (C) 2017
  */
 import util from './gl-utils';
-import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
-import wglPanZoom from './wglPanZoom';
 
 import createScreenProgram from './programs/screenProgram';
 import createDrawParticlesProgram from './programs/drawParticlesProgram';
-import createCursorUpdater from './utils/cursorUpdater';
 import createVectorFieldEditorState from './editor/vectorFieldState';
 import createInputsModel from './createInputsModel';
 
@@ -35,9 +32,9 @@ export default function initScene(gl) {
   // TODO: bbox needs to be a class with width/height properties.
   var bbox = appState.getBBox() || {};
   var currentPanZoomTransform = {
-    scale: 1,
-    x: 0,
-    y: 0
+    scale: 0.1,
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2
   };
 
   // How many particles do we want?
@@ -111,7 +108,7 @@ export default function initScene(gl) {
   // screen rendering;
   var screenProgram = createScreenProgram(ctx);
   var drawProgram = createDrawParticlesProgram(ctx);
-  var cursorUpdater = createCursorUpdater(ctx);
+  // var cursorUpdater = createCursorUpdater(ctx);
   var vectorFieldEditorState = createVectorFieldEditorState(drawProgram);
 
   // particles
@@ -121,10 +118,6 @@ export default function initScene(gl) {
     start: nextFrame,
     stop,
     dispose,
-
-    resetBoundingBox,
-    moveBoundingBox,
-    applyBoundingBox,
 
     setPaused,
 
@@ -160,7 +153,6 @@ export default function initScene(gl) {
     }
   }
 
-  var panzoom = initPanzoom();
   restoreBBox();
 
   setTimeout(() => {
@@ -168,30 +160,6 @@ export default function initScene(gl) {
   })
 
   return api;
-
-  function moveBoundingBox(changes) {
-    if (!changes) return;
-    var parsedBoundingBox = Object.assign({}, ctx.bbox);
-
-    assignIfPossible(changes, 'minX', parsedBoundingBox);
-    assignIfPossible(changes, 'minY', parsedBoundingBox);
-    assignIfPossible(changes, 'maxX', parsedBoundingBox);
-    assignIfPossible(changes, 'maxY', parsedBoundingBox);
-
-    // for Y axis changes we need to preserve aspect ration, which means
-    // we also need to change X...
-    if (changes.minY !== undefined || changes.maxY !== undefined) {
-      // adjust values for X
-      var heightChange = Math.abs(parsedBoundingBox.minY - parsedBoundingBox.maxY)/Math.abs(ctx.bbox.minY - ctx.bbox.maxY);
-      var cx = (ctx.bbox.maxX + ctx.bbox.minX)/2;
-      var prevWidth = (ctx.bbox.maxX - ctx.bbox.minX)/2;
-      parsedBoundingBox.minX = cx - prevWidth * heightChange;
-      parsedBoundingBox.maxX = cx + prevWidth * heightChange;
-
-    }
-
-    applyBoundingBox(parsedBoundingBox);
-  }
 
   function assignIfPossible(change, key, newBoundingBox) {
     var value = Number.parseFloat(change[key]);
@@ -278,7 +246,7 @@ export default function initScene(gl) {
 
     screenProgram.updateScreenTextures();
 
-    updateBoundingBox(currentPanZoomTransform);
+    updateBoundingBox();
   }
 
   function setWidthHeight(w, h) {
@@ -303,9 +271,7 @@ export default function initScene(gl) {
 
   function dispose() {
     stop();
-    panzoom.dispose();
     window.removeEventListener('resize', onResize, true);
-    cursorUpdater.dispose();
     vectorFieldEditorState.dispose();
   }
 
@@ -343,16 +309,6 @@ export default function initScene(gl) {
     drawProgram.updateParticlesCount();
   }
 
-  function initPanzoom() {
-    let initializedPanzoom = makePanzoom(gl.canvas, {
-      realPinch: true,
-      zoomSpeed: 0.025,
-      controller: wglPanZoom(gl.canvas, updateBoundingBox)
-    });
-
-    return initializedPanzoom;
-  }
-
   function restoreBBox() {
     var {width, height} = canvasRect;
 
@@ -363,20 +319,17 @@ export default function initScene(gl) {
 
     var w2 = sX * width / 2;
     var h2 = sY * width / 2;
-    panzoom.showRectangle({
-      left: -w2 + tX,
-      top: -h2 - tY,
-      right: w2 + tX,
-      bottom: h2 - tY ,
-    });
+    updateBoundingBox();
   }
 
-  function updateBoundingBox(transform) {
+  function updateBoundingBox() {
     screenProgram.boundingBoxUpdated = true;
 
-    currentPanZoomTransform.x = transform.x;
-    currentPanZoomTransform.y = transform.y;
-    currentPanZoomTransform.scale = transform.scale;
+    currentPanZoomTransform = {
+      scale: 0.1,
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
 
     var {width, height} = canvasRect;
     width /= window.devicePixelRatio;
@@ -398,30 +351,12 @@ export default function initScene(gl) {
     bus.fire('bbox-change', bbox);
 
     function clientX(x) {
-      return (x - transform.x)/transform.scale;
+      return (x - currentPanZoomTransform.x)/currentPanZoomTransform.scale;
     }
 
     function clientY(y) {
-      return (y - transform.y)/transform.scale;
+      return (y - currentPanZoomTransform.y)/currentPanZoomTransform.scale;
     }
-  }
-
-  function resetBoundingBox() {
-    var w = Math.PI * Math.E * 0.5;
-    var h = Math.PI * Math.E * 0.5;
-
-    applyBoundingBox({
-      minX: -w,
-      minY: -h,
-      maxX: w,
-      maxY: h
-    })
-  }
-
-  function applyBoundingBox(boundingBox) {
-    restoreBBox();
-    // a hack to trigger panzoom event
-    panzoom.moveBy(0, 0, false);
   }
 
   // backgroundColor should be an object with r, g, b, a properties (range: 0-1)
