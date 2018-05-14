@@ -4,7 +4,6 @@ import { CreateElement, VNode } from 'vue';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import initScene from '../lib/field-play/scene';
 // import ColorModes from '../lib/field-play/programs/colorModes';
-import wrapVectorField from '../lib/field-play/wrapVectorField';
 
 @Component
 export default class FieldVizualisation extends Vue {
@@ -51,36 +50,53 @@ export default class FieldVizualisation extends Vue {
   }
 
   get GLSLcode () {
-    // return `
-    //   v.x = ${this.formatNumberforGLSL(this.k1 / 5)} * p.y;
-    //   v.y = ${this.formatNumberforGLSL(this.k2 / 5)} * p.x;
-    // `;
+    let codeLines = [];
+
+    codeLines.push(`v.x = 0.;`);
+    codeLines.push(`v.y = 0.;`);
+
     // CIRCLE: alpha
     let circle = {
       x: `p.y`,
       y: `-p.x`
     }
+    codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.x});`);
+    codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.y});`);
+
     // SQUARES: gamma
     let squares = {
-      x: `sign(cos(p.y * 2.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * cos(p.y * 2.)`,
+      x: `sign(sin(p.y * 2.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.y * 2.)`,
       y: `sign(sin(p.x * 2.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.x * 2.)`
     };
+    codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.x});`);
+    codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.y});`);
+
     return `
-      v.x = (pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.x})) + (pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.x}));
-      v.y = (pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.y})) + (pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.y}));
-    `;
+    vec2 get_velocity(vec2 p) {
+      vec2 v = vec2(0., 0.);
+
+      ${codeLines.join('\n')}
+
+      return v;
+    }`
   }
 
   updateVectorField () {
     if (!this.scene)
       return;
 
-    this.scene.vectorFieldEditorState.setCode(wrapVectorField(this.GLSLcode));
+    this.scene.vectorFieldEditorState.setCode(this.GLSLcode);
   }
 
   @Watch('GLSLcode')
   GLSLcodeUpdated () {
     this.updateVectorField();
+  }
+
+  @Watch('paused')
+  togglePause () {
+    if (this.scene)
+      this.scene[this.paused ? 'stop' : 'start']();
   }
 
   render (h: CreateElement): VNode {
