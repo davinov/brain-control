@@ -15,18 +15,24 @@ export default class FieldVizualisation extends Vue {
   @Prop({ required: true })
   public k2: number;
 
+  @Prop({ required: true })
+  public n: number;
+
   @Prop({ default: false })
   public paused: boolean;
 
   private timeStep: number = 0.01;
   private dropProbability: number = 0.009;
-  private particleCount: number = 5000 * window.devicePixelRatio;
   private fadeout: number = .998;
   // private colorMode: number = ColorModes.UNIFORM;
 
+  get particleCount (): number {
+    return Math.max(this.n * 500 * Math.pow(window.devicePixelRatio, 2), 1);
+  }
+
   mounted () {
     let canvas: HTMLCanvasElement = this.$el;
-    let ctxOptions = { antialiasing: false };
+    let ctxOptions = { antialias: true, alpha: false };
     let gl = canvas.getContext('webgl', ctxOptions) ||
     canvas.getContext('experimental-webgl', ctxOptions);
 
@@ -35,6 +41,7 @@ export default class FieldVizualisation extends Vue {
     this.scene.setBackgroundColor({
       r: 0.05, g: 0, b: 0.1, a: 1
     });
+    this.scene.setDropProbability(0.001)
     this.updateVectorField();
 
     this.scene.start();
@@ -57,7 +64,7 @@ export default class FieldVizualisation extends Vue {
     codeLines.push(`float tau = acos(0.);`);
 
     if (this.k1 > 0) {
-      // CIRCLE: alpha
+      // CIRCLE-EYE: alpha
       let circle = {
         x: `p.y`,
         y: `-p.x`
@@ -77,6 +84,9 @@ export default class FieldVizualisation extends Vue {
         codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.y});`);
       codeLines.push(`}`);
     }
+
+    codeLines.push(`v.x /= 2.;`);
+    codeLines.push(`v.y /= 2.;`);
 
     return `
     vec2 get_velocity(vec2 p) {
@@ -106,6 +116,12 @@ export default class FieldVizualisation extends Vue {
       this.scene[this.paused ? 'stop' : 'start']();
   }
 
+  @Watch('particleCount')
+  updateParticleCount () {
+    if (this.scene)
+      this.scene.setParticlesCount(this.particleCount);
+  }
+
   render (h: CreateElement): VNode {
     return h('canvas', { class: 'brain-particles' });
   }
@@ -116,5 +132,6 @@ export default class FieldVizualisation extends Vue {
 <style scoped lang="scss">
 .brain-particles {
   position: absolute;
+  filter: blur(1.2px) contrast(2.2);
 }
 </style>

@@ -13,6 +13,7 @@
       <field-visualization
         :k1="k1"
         :k2="k2"
+        :n="n"
         :paused="paused"
       ></field-visualization>
     </div>
@@ -29,7 +30,7 @@
         max="1"
         step="0.01"
       />
-      <pre>{{ k1 }}</pre>
+      <pre>k1: {{ k1 }}</pre>
       <input
         type="range"
         v-model.number="k2"
@@ -37,7 +38,15 @@
         max="1"
         step="0.01"
       />
-      <pre>{{ k2 }}</pre>
+      <pre>k2: {{ k2 }}</pre>
+      <input
+        type="range"
+        v-model.number="n"
+        min="0"
+        max="100"
+        step="1"
+      />
+      <pre>n: {{ n }}</pre>
     </div>
 
     <div class="muse-recorder__connection">
@@ -109,6 +118,7 @@ export default class MuseRecorder extends Vue {
 
   private k1: number = 0;
   private k2: number = 0;
+  private n: number = 0;
   private paused: boolean = false;
 
   private created() {

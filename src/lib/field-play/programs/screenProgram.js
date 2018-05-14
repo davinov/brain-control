@@ -49,7 +49,7 @@ export default function makeScreenProgram(ctx) {
     saveLastBbox();
 
     gl.enable(gl.BLEND); 
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
     gl.clearColor(ctx.backgroundColor.r, ctx.backgroundColor.g, ctx.backgroundColor.b, ctx.backgroundColor.a);
     gl.clear(gl.COLOR_BUFFER_BIT);
     drawTexture(screenTexture, 1.0, NO_TRANSFORM);
