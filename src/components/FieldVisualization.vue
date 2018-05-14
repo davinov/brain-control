@@ -33,9 +33,9 @@ export default class FieldVizualisation extends Vue {
 
     this.scene = initScene(gl);
     this.scene.setParticlesCount(this.particleCount);
-    this.scene.setBackgroundColor({
-      r: 0.05, g: 0, b: 0.1, a: 1
-    });
+    // this.scene.setBackgroundColor({
+    //   r: 0.05, g: 0, b: 0.1, a: 1
+    // });
     this.updateVectorField();
 
     this.scene.start();

@@ -9,11 +9,14 @@
  * Copyright (C) 2017
  */
 import util from './gl-utils';
+import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
+import wglPanZoom from './wglPanZoom';
 
 import createScreenProgram from './programs/screenProgram';
 import createDrawParticlesProgram from './programs/drawParticlesProgram';
+import createCursorUpdater from './utils/cursorUpdater';
 import createVectorFieldEditorState from './editor/vectorFieldState';
 import createInputsModel from './createInputsModel';
 
@@ -31,6 +34,11 @@ export default function initScene(gl) {
   // TODO: It feels like bounding box management needs to be moved out from here.
   // TODO: bbox needs to be a class with width/height properties.
   var bbox = appState.getBBox() || {};
+  var currentPanZoomTransform = {
+    scale: 1,
+    x: 0,
+    y: 0
+  };
 
   // How many particles do we want?
   var particleCount = appState.getParticleCount();
@@ -103,6 +111,7 @@ export default function initScene(gl) {
   // screen rendering;
   var screenProgram = createScreenProgram(ctx);
   var drawProgram = createDrawParticlesProgram(ctx);
+  var cursorUpdater = createCursorUpdater(ctx);
   var vectorFieldEditorState = createVectorFieldEditorState(drawProgram);
 
   // particles
@@ -112,6 +121,10 @@ export default function initScene(gl) {
     start: nextFrame,
     stop,
     dispose,
+
+    resetBoundingBox,
+    moveBoundingBox,
+    applyBoundingBox,
 
     setPaused,
 
@@ -141,7 +154,14 @@ export default function initScene(gl) {
       return canvasRect;
     },
 
+    getBoundingBox() {
+      // again, we trust. Maybe to much?
+      return ctx.bbox;
+    }
   }
+
+  var panzoom = initPanzoom();
+  restoreBBox();
 
   setTimeout(() => {
     bus.fire('scene-ready', api);
@@ -149,12 +169,37 @@ export default function initScene(gl) {
 
   return api;
 
+  function moveBoundingBox(changes) {
+    if (!changes) return;
+    var parsedBoundingBox = Object.assign({}, ctx.bbox);
+
+    assignIfPossible(changes, 'minX', parsedBoundingBox);
+    assignIfPossible(changes, 'minY', parsedBoundingBox);
+    assignIfPossible(changes, 'maxX', parsedBoundingBox);
+    assignIfPossible(changes, 'maxY', parsedBoundingBox);
+
+    // for Y axis changes we need to preserve aspect ration, which means
+    // we also need to change X...
+    if (changes.minY !== undefined || changes.maxY !== undefined) {
+      // adjust values for X
+      var heightChange = Math.abs(parsedBoundingBox.minY - parsedBoundingBox.maxY)/Math.abs(ctx.bbox.minY - ctx.bbox.maxY);
+      var cx = (ctx.bbox.maxX + ctx.bbox.minX)/2;
+      var prevWidth = (ctx.bbox.maxX - ctx.bbox.minX)/2;
+      parsedBoundingBox.minX = cx - prevWidth * heightChange;
+      parsedBoundingBox.maxX = cx + prevWidth * heightChange;
+
+    }
+
+    applyBoundingBox(parsedBoundingBox);
+  }
+
   function assignIfPossible(change, key, newBoundingBox) {
     var value = Number.parseFloat(change[key]);
     if (Number.isFinite(value)) {
       newBoundingBox[key] = value;
     }
   }
+
 
   function setColorMode(x) {
     var mode = parseInt(x, 10);
@@ -229,12 +274,11 @@ export default function initScene(gl) {
   }
 
   function onResize() {
-    setWidthHeight(
-      window.innerWidth,
-      window.innerHeight
-    );
+    setWidthHeight(window.innerWidth, window.innerHeight);
 
     screenProgram.updateScreenTextures();
+
+    updateBoundingBox(currentPanZoomTransform);
   }
 
   function setWidthHeight(w, h) {
@@ -253,13 +297,15 @@ export default function initScene(gl) {
     canvas.style.height = y + 'px';
     canvas.style.left = (-dx) + 'px';
     canvas.style.top = (-dy) + 'px';
-    canvas.width = canvasRect.width ;
+    canvas.width = canvasRect.width;
     canvas.height = canvasRect.height;
   }
 
   function dispose() {
     stop();
+    panzoom.dispose();
     window.removeEventListener('resize', onResize, true);
+    cursorUpdater.dispose();
     vectorFieldEditorState.dispose();
   }
 
@@ -297,9 +343,89 @@ export default function initScene(gl) {
     drawProgram.updateParticlesCount();
   }
 
+  function initPanzoom() {
+    let initializedPanzoom = makePanzoom(gl.canvas, {
+      realPinch: true,
+      zoomSpeed: 0.025,
+      controller: wglPanZoom(gl.canvas, updateBoundingBox)
+    });
+
+    return initializedPanzoom;
+  }
+
+  function restoreBBox() {
+    var {width, height} = canvasRect;
+
+    let sX = Math.PI * Math.E;
+    let sY = Math.PI * Math.E;
+    let tX = 0;
+    let tY = 0;
+
+    var w2 = sX * width / 2;
+    var h2 = sY * width / 2;
+    panzoom.showRectangle({
+      left: -w2 + tX,
+      top: -h2 - tY,
+      right: w2 + tX,
+      bottom: h2 - tY ,
+    });
+  }
+
+  function updateBoundingBox(transform) {
+    screenProgram.boundingBoxUpdated = true;
+
+    currentPanZoomTransform.x = transform.x;
+    currentPanZoomTransform.y = transform.y;
+    currentPanZoomTransform.scale = transform.scale;
+
+    var {width, height} = canvasRect;
+    width /= window.devicePixelRatio;
+    height /= window.devicePixelRatio;
+
+    var minX = clientX(0);
+    var minY = clientY(0);
+    var maxX = clientX(width);
+    var maxY = clientY(height);
+
+    // we divide by width to keep aspect ratio
+    // var ar = width/height;
+    var p = 10000;
+    bbox.minX = Math.round(p * minX/width)/p;
+    bbox.minY = Math.round(p * -minY/width)/p;
+    bbox.maxX = Math.round(p * maxX/width)/p;
+    bbox.maxY = Math.round(p * -maxY/ width)/p;
+
+    bus.fire('bbox-change', bbox);
+
+    function clientX(x) {
+      return (x - transform.x)/transform.scale;
+    }
+
+    function clientY(y) {
+      return (y - transform.y)/transform.scale;
+    }
+  }
+
+  function resetBoundingBox() {
+    var w = Math.PI * Math.E * 0.5;
+    var h = Math.PI * Math.E * 0.5;
+
+    applyBoundingBox({
+      minX: -w,
+      minY: -h,
+      maxX: w,
+      maxY: h
+    })
+  }
+
+  function applyBoundingBox(boundingBox) {
+    restoreBBox();
+    // a hack to trigger panzoom event
+    panzoom.moveBy(0, 0, false);
+  }
+
   // backgroundColor should be an object with r, g, b, a properties (range: 0-1)
   function setBackgroundColor(backgroundColor) {
     ctx.backgroundColor = backgroundColor; 
   }
-
 }

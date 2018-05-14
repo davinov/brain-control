@@ -19,7 +19,7 @@ var qs = queryState({}, {
   rewriteHashToSearch: true
 });
 
-var currentState = qs.get();
+var currentState = {}; //qs.get();
 
 var defaultVectorField = wrapVectorField(`v.x = 0.1 * p.y;
   v.y = -0.2 * p.y;`);
@@ -77,7 +77,7 @@ function getColorMode() {
 
 function setColorMode(colorMode) {
   if (!defined(colorMode)) return;
-  qs.set({cm: colorMode});
+  // qs.set({cm: colorMode});
   currentState.cm = colorMode;
 }
 
@@ -87,7 +87,7 @@ function getColorFunction() {
 }
 
 function setColorFunction(colorFunction) {
-  qs.set({cf: colorFunction});
+  // qs.set({cf: colorFunction});
   currentState.cf = colorFunction;
 }
 
@@ -98,7 +98,7 @@ function getFadeout() {
 
 function setFadeout(fadeout) {
   if (!defined(fadeout)) return;
-  qs.set({fo: fadeout});
+  // qs.set({fo: fadeout});
   currentState.fo = fadeout;
 }
 
@@ -109,7 +109,7 @@ function getParticleCount() {
 
 function setParticleCount(particleCount) {
   if (!defined(particleCount)) return;
-  qs.set({pc: particleCount});
+  // qs.set({pc: particleCount});
   currentState.pc = particleCount;
 }
 
@@ -120,7 +120,7 @@ function getIntegrationTimeStep() {
 
 function setIntegrationTimeStep(dt) {
   if (!defined(dt)) return;
-  qs.set({dt: dt})
+  // qs.set({dt: dt})
   currentState.dt = dt;
 }
 
@@ -132,7 +132,7 @@ function getDropProbability() {
 function setDropProbability(dropProbability) {
   if (!defined(dropProbability)) return;
   clamp(dropProbability, 0, 1);
-  qs.set({dp: dropProbability})
+  // qs.set({dp: dropProbability})
 }
 
 function getBBox() {
@@ -178,11 +178,11 @@ function saveBBox(bbox, immediate = false) {
     pendingSave = 0;
   }
 
-  if (immediate) qs.set(bbox);
+  // if (immediate) qs.set(bbox);
   else {
     pendingSave = setTimeout(() => {
       pendingSave = 0;
-      qs.set(bbox);
+      // qs.set(bbox);
     }, 300);
   }
 }
@@ -199,7 +199,7 @@ function getCode() {
     vfCode = wrapVectorField(oldCode);
     // side effect - let's clean the old URL
     delete(currentState.code);
-    qs.set('vf', vfCode);
+    // qs.set('vf', vfCode);
     return vfCode;
   }
 
@@ -211,9 +211,9 @@ function getDefaultCode() {
 }
 
 function saveCode(code) {
-  qs.set({
-    vf: code
-  });
+  // qs.set({
+  //   vf: code
+  // });
   currentState.code = code;
 }
 
