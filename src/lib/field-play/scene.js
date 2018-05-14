@@ -17,6 +17,16 @@ import createDrawParticlesProgram from './programs/drawParticlesProgram';
 import createVectorFieldEditorState from './editor/vectorFieldState';
 import createInputsModel from './createInputsModel';
 
+const INITIAL_SPEED = 1;
+
+function integrationTimeStepFromSpeed(speed) {
+  return speed * 0.004;
+}
+
+function fadeOutFromSpeed(speed) {
+  return 1 - speed * 0.002;
+}
+
 /**
  * Kicks offs the app rendering. Initialized before even vue is loaded.
  *
@@ -66,7 +76,8 @@ export default function initScene(gl) {
     // TODO: I need to find a better way to manage this.
     screenTextureUnit: 3,
 
-    integrationTimeStep: appState.getIntegrationTimeStep(),
+    speed: INITIAL_SPEED,
+    integrationTimeStep: integrationTimeStepFromSpeed(INITIAL_SPEED),
 
     // On each frame the likelihood for a particle to reset its position is this:
     dropProbability: appState.getDropProbability(),
@@ -89,7 +100,7 @@ export default function initScene(gl) {
     particleStateResolution: 0,
 
     // How quickly we should fade previous frame (from 0..1)
-    fadeOpacity: appState.getFadeout(),
+    fadeOpacity: fadeOutFromSpeed(INITIAL_SPEED),
 
     backgroundColor: { r: 0, g: 0, b: 0, a: 1 },
 
@@ -101,6 +112,7 @@ export default function initScene(gl) {
 
   // Frame management
   var lastAnimationFrame;
+  var lastAnimationFrameTime;
   var isPaused = false;
 
   var inputsModel = createInputsModel(ctx);
@@ -130,8 +142,8 @@ export default function initScene(gl) {
     setDropProbability,
     getDropProbability,
 
-    getIntegrationTimeStep,
-    setIntegrationTimeStep,
+    getSpeed,
+    setSpeed,
 
     setColorMode,
     getColorMode,
@@ -180,16 +192,17 @@ export default function initScene(gl) {
     return appState.getColorMode();
   }
 
-  function getIntegrationTimeStep() {
-    return appState.getIntegrationTimeStep();
+  function getSpeed() {
+    return ctx.speed;
   }
 
-  function setIntegrationTimeStep(x) {
+  function setSpeed(x) {
     var f = parseFloat(x);
     if (Number.isFinite(f)) {
-      ctx.integrationTimeStep = f;
-      appState.setIntegrationTimeStep(f);
-      bus.fire('integration-timestep-changed', f);
+      ctx.speed = f;
+      ctx.integrationTimeStep = integrationTimeStepFromSpeed(speed);
+      ctx.fadeOpacity = fadeOutFromSpeed(speed);
+      bus.fire('integration-timestep-changed', ctx.integrationTimeStep);
     }
   }
 
@@ -281,16 +294,27 @@ export default function initScene(gl) {
     if (isPaused) return;
 
     lastAnimationFrame = requestAnimationFrame(draw);
+    lastAnimationFrameTime = Date.now();
   }
 
   function stop() {
     cancelAnimationFrame(lastAnimationFrame);
     lastAnimationFrame = 0;
+    lastAnimationFrameTime = undefined;
   }
 
   function draw() {
     lastAnimationFrame = 0;
 
+    // Adjust integration time step if we missed frames
+    if (lastAnimationFrameTime) {
+      let timeSinceLastFrame = Date.now() - lastAnimationFrameTime;
+      let performanceRatio = (1000 / 30) / timeSinceLastFrame;
+      let correctedSpeed = ctx.speed / Math.min(performanceRatio, 1);
+      ctx.integrationTimeStep = integrationTimeStepFromSpeed(correctedSpeed);
+      ctx.fadeOpacity = fadeOutFromSpeed(correctedSpeed);
+      // bus.fire('integration-timestep-changed', ctx.integrationTimeStep);
+    }
     drawScreen();
 
     nextFrame();
