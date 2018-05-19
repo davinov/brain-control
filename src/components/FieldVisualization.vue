@@ -62,6 +62,7 @@ export default class FieldVizualisation extends Vue {
     codeLines.push(`v.x = 0.;`);
     codeLines.push(`v.y = 0.;`);
     codeLines.push(`float tau = acos(0.);`);
+    codeLines.push(`float pi = tau / 2.;`);
 
     if (this.k1 > 0) {
       // CIRCLE-EYE: alpha
@@ -76,10 +77,11 @@ export default class FieldVizualisation extends Vue {
     if (this.k2 > 0) {
       // SQUARES: gamma
       let squares = {
-        x: `sign(sin(p.y * 2.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.y * 2.)`,
-        y: `sign(sin(p.x * 2.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.x * 2.)`
+        x: `sign(sin(p.y * 4.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.y * 4.)`,
+        y: `sign(-1. * sin(p.x * 4.)) / 2. - (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.x * 4.)`
       };
-      codeLines.push(`if ((abs(p.x) + abs(p.y)) < 2. * tau) {`);
+      codeLines.push(`float d = (abs(p.x) + abs(p.y)) * 2. / 3.;`)
+      codeLines.push(`if ( (d < tau) && (d > pi / 2.) ) {`);
         codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.x});`);
         codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.y});`);
       codeLines.push(`}`);
