@@ -148,6 +148,9 @@ export default function initScene(gl) {
     setColorMode,
     getColorMode,
 
+    setColorFunction,
+    getColorFunction,
+
     vectorFieldEditorState,
 
     inputsModel,
@@ -183,13 +186,21 @@ export default function initScene(gl) {
 
   function setColorMode(x) {
     var mode = parseInt(x, 10);
-    appState.setColorMode(mode);
-    ctx.colorMode = appState.getColorMode();
+    ctx.colorMode = mode;
     drawProgram.updateColorMode(mode);
   }
 
   function getColorMode() {
-    return appState.getColorMode();
+    return ctx.colorMode;
+  }
+
+  function setColorFunction(code) {
+    ctx.colorFunction = code;
+    drawProgram.updateColorMode(ctx.colorMode);
+  }
+
+  function getColorFunction() {
+    return ctx.colorFunction;
   }
 
   function getSpeed() {

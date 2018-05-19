@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { CreateElement, VNode } from 'vue';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import initScene from '../lib/field-play/scene';
-// import ColorModes from '../lib/field-play/programs/colorModes';
+import ColorModes from '../lib/field-play/programs/colorModes';
 
 @Component
 export default class FieldVizualisation extends Vue {
@@ -43,6 +43,8 @@ export default class FieldVizualisation extends Vue {
     });
     this.scene.setDropProbability(0.001)
     this.updateVectorField();
+    this.updateColorFunction();
+    this.scene.setColorMode(ColorModes.VELOCITY);
 
     this.scene.start();
   }
@@ -107,9 +109,36 @@ export default class FieldVizualisation extends Vue {
     this.scene.vectorFieldEditorState.setCode(this.GLSLcode);
   }
 
+  get colorFunction() {
+    let k = (this.k2 - this.k1) / 2 + 0.5;
+
+    return `
+      vec4 get_color(vec2 p) {
+        vec2 velocity = get_velocity(p);
+        float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
+        float hue = 0.05 + (1. - speed) * 0.5;
+        float hue1 = 1. - hue / 2.;
+        float hue2 = .5 + hue / 2.;
+        hue = ${this.formatNumberforGLSL(k)} * hue1 + (1. - ${this.formatNumberforGLSL(k)}) * hue2;
+        return vec4(hsv2rgb(vec3(hue, 0.9, 1.)), 1.0);
+      }`;
+  }
+
+  updateColorFunction () {
+    if (!this.scene)
+      return;
+
+    this.scene.setColorFunction(this.colorFunction);
+  }
+
   @Watch('GLSLcode')
   GLSLcodeUpdated () {
     this.updateVectorField();
+  }
+
+  @Watch('colorFunction')
+  colorFunctionToUpdate () {
+    this.updateColorFunction();
   }
 
   @Watch('paused')

@@ -46,18 +46,18 @@ vec4 get_color(vec2 p) {
 `
     }
     if (colorMode === ColorModes.VELOCITY) {
-      return `
-vec4 get_color(vec2 p) {
-  vec2 velocity = get_velocity(p);
-  float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
-  return vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
-}
-`
-    } 
+      return colorCode || `
+        vec4 get_color(vec2 p) {
+          vec2 velocity = get_velocity(p);
+          float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
+          float hue = 0.05 + (1. - speed) * 0.5;
+          return vec4(hsv2rgb(vec3(hue, 0.9, 1.)), 1.0);
+        }
+      `;
+    }
 
     if (colorMode === ColorModes.CUSTOM) {
       if (!colorCode) throw new Error('color mode is set to custom, but no color function is specified');
-
       return colorCode;
     }
 

@@ -153,13 +153,6 @@ void main() {
   vec2 p = 1.0 - v_tex_pos;
   vec4 color = texture2D(u_screen, p);
 
-  // For some reason particles near border leave trace when we translate the texture
-  // This is my dirty hack to fix it: https://computergraphics.stackexchange.com/questions/5754/fading-particles-and-transition
-  if (p.x < u_opacity_border || p.x > 1. - u_opacity_border || p.y < u_opacity_border || p.y > 1. - u_opacity_border) {
-    gl_FragColor = vec4(0.);
-  } else {
-    // opacity fade out even with a value close to 0.0
-    gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
-  }
+  gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
 }`
 }
