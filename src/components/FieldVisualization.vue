@@ -65,6 +65,7 @@ export default class FieldVizualisation extends Vue {
     codeLines.push(`v.y = 0.;`);
     codeLines.push(`float tau = acos(0.);`);
     codeLines.push(`float pi = tau / 2.;`);
+    codeLines.push(`float l = length(p);`)
 
     if (this.k1 > 0) {
       // CIRCLE-EYE: alpha
@@ -72,8 +73,8 @@ export default class FieldVizualisation extends Vue {
         x: `p.y`,
         y: `-p.x`
       }
-      codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.x}) / pow(max(1., abs(3. * length(p)) - 2. * tau), 3.);`);
-      codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.y}) / pow(max(1., abs(3. * length(p)) - 2. * tau), 3.);`);
+      codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.x}) / pow(max(1., abs(3. * l) - 2. * tau), 3.);`);
+      codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.y}) / pow(max(1., abs(3. * l) - 2. * tau), 3.);`);
     }
 
     if (this.k2 > 0) {
@@ -84,10 +85,14 @@ export default class FieldVizualisation extends Vue {
       };
       codeLines.push(`float d = (abs(p.x) + abs(p.y)) * 2. / 3.;`)
       codeLines.push(`if ( (d < tau) && (d > pi / 2.) ) {`);
-        codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.x});`);
-        codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${squares.y});`);
+        codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k2)}, 3.) * (${squares.x});`);
+        codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k2)}, 3.) * (${squares.y});`);
       codeLines.push(`}`);
     }
+
+    let steadyK = Math.pow( (1 - Math.max(this.k1, this.k2)) * Math.pow(this.k1 + this.k2, 2), 2);
+    codeLines.push(`v.x += ${this.formatNumberforGLSL(steadyK)} * p.x / pow(l, 2.);`);
+    codeLines.push(`v.y += ${this.formatNumberforGLSL(steadyK)} * p.y / pow(l, 2.);`);
 
     codeLines.push(`v.x /= 2.;`);
     codeLines.push(`v.y /= 2.;`);
@@ -110,15 +115,15 @@ export default class FieldVizualisation extends Vue {
   }
 
   get colorFunction() {
-    let k = (this.k2 - this.k1) / 2 + 0.5;
+    let k = Math.pow((this.k2 - this.k1) / 2 + 0.5, 2);
 
     return `
       vec4 get_color(vec2 p) {
         vec2 velocity = get_velocity(p);
         float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
         float hue = 0.05 + (1. - speed) * 0.5;
-        float hue1 = 1. - hue / 2.;
-        float hue2 = .5 + hue / 2.;
+        float hue1 = 1. - pow(hue, 3.) / 2. + 0.15;
+        float hue2 = .5 + pow(hue, 3.) / 2.;
         hue = ${this.formatNumberforGLSL(k)} * hue1 + (1. - ${this.formatNumberforGLSL(k)}) * hue2;
         return vec4(hsv2rgb(vec3(hue, 0.9, 1.)), 1.0);
       }`;
