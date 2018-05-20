@@ -8,6 +8,10 @@
     "test": "vue-cli-service test"
   },
   "dependencies": {
+    "@fortawesome/fontawesome": "^1.1.8",
+    "@fortawesome/fontawesome-free-brands": "^5.0.13",
+    "@fortawesome/fontawesome-free-regular": "^5.0.13",
+    "@fortawesome/vue-fontawesome": "^0.0.22",
     "d3-ease": "^1.0.3",
     "d3-interpolate": "^1.1.6",
     "d3-interpolate-path": "^2.0.1",

@@ -18,66 +18,76 @@
       ></field-visualization>
     </div>
 
-    <div class="muse-recorder__controls">
-      <button
-        @click="paused = !paused"
-      > Pause
-      </button>
-      <input
-        type="range"
-        v-model.number="k1"
-        min="0"
-        max="1"
-        step="0.01"
+    <div
+      class="muse-recorder__connection"
+      :class="{'muse-recorder__connection--connected': connectionStatus}"
+    >
+      <font-awesome-icon
+        class="muse-recorder__connection-icon"
+        :icon="['fab', connectionStatus ? 'bluetooth-b' : 'bluetooth']"
+        @click="connectionStatus ? disconnect() : connectToMuse()"
       />
-      <pre>k1: {{ k1 }}</pre>
-      <input
-        type="range"
-        v-model.number="k2"
-        min="0"
-        max="1"
-        step="0.01"
-      />
-      <pre>k2: {{ k2 }}</pre>
-      <input
-        type="range"
-        v-model.number="n"
-        min="0"
-        max="100"
-        step="1"
-      />
-      <pre>n: {{ n }}</pre>
     </div>
 
-    <div class="muse-recorder__connection">
-      <div
-        v-if="connectionStatus"
-      > Connected to muse
+    <div
+      class="muse-recorder__session-control"
+      v-if="true || connectionStatus"
+    >
+      <div class="muse-recorder__main-controls">
+        <font-awesome-icon
+          class="muse-recorder__session-control-icon"
+          :icon="['far', sessionInProgress ? 'pause-circle' : 'play-circle']"
+          @click="sessionInProgress ? stopSession() : startSession()"
+        />
+        <font-awesome-icon
+          class="muse-recorder__session-details-icon"
+          :icon="['far', sessionsDetailsOpened ? 'caret-square-down' : 'caret-square-up']"
+          @click="sessionsDetailsOpened = !sessionsDetailsOpened"
+        />
       </div>
-
-      <button
-        v-else
-        @click="connectToMuse()"
-      > Connect
-      </button>
-    </div>
-
-    <div class="muse-recorder__sessions">
-      <button
-        v-if="connectionStatus && !sessionInProgress"
-        @click="startSession()"
-      > Start a new session
-      </button>
-      <button
-        v-if="sessionInProgress"
-        @click="stopSession()"
-      > Stop the session
-      </button>
-      <Session
-        v-if="currentSession.length"
-        :sessionData="currentSession"
+      <div
+        class="muse-recorder__session-details"
+        v-if="sessionsDetailsOpened"
       >
-      </Session>
+        <div class="muse-recorder__viz-controls">
+          <button
+            @click="paused = !paused"
+          > Pause viz
+          </button>
+          <input
+            type="range"
+            v-model.number="k1"
+            min="0"
+            max="1"
+            step="0.01"
+          />
+          <pre>k1: {{ k1 }}</pre>
+          <input
+            type="range"
+            v-model.number="k2"
+            min="0"
+            max="1"
+            step="0.01"
+          />
+          <pre>k2: {{ k2 }}</pre>
+          <input
+            type="range"
+            v-model.number="n"
+            min="0"
+            max="100"
+            step="1"
+          />
+          <pre>n: {{ n }}</pre>
+        </div>
+        <Session
+          v-if="currentSession.length"
+          :sessionData="currentSession"
+        >
+        </Session>
+        <div v-else>
+          No session data
+        </div>
+      </div>
     </div>
 
   </div>
@@ -96,6 +106,22 @@ import Visualization from './Visualization.vue';
 import ParticlesVisualization from './ParticlesVisualization.vue';
 import FieldVisualization from './FieldVisualization.vue';
 
+import FontAwesomeIcon from '@fortawesome/vue-fontawesome';
+
+import fontawesome from '@fortawesome/fontawesome';
+import faBluetooth from '@fortawesome/fontawesome-free-brands/faBluetooth';
+import faBluetoothB from '@fortawesome/fontawesome-free-brands/faBluetoothB';
+import faPlayCircle from '@fortawesome/fontawesome-free-regular/faPlayCircle';
+import faPauseCircle from '@fortawesome/fontawesome-free-regular/faPauseCircle';
+import faCaretSquareDown from '@fortawesome/fontawesome-free-regular/faCaretSquareDown';
+import faCaretSquareUp from '@fortawesome/fontawesome-free-regular/faCaretSquareUp';
+
+fontawesome.library.add(
+  faBluetooth, faBluetoothB,
+  faPlayCircle, faPauseCircle,
+  faCaretSquareDown, faCaretSquareUp
+);
+
 export interface AveragedRelativeBandPowers {
   [index: string]: number;
 }
@@ -106,6 +132,7 @@ export interface AveragedRelativeBandPowers {
     Visualization,
     ParticlesVisualization,
     FieldVisualization,
+    FontAwesomeIcon,
   }
 })
 export default class MuseRecorder extends Vue {
@@ -119,7 +146,8 @@ export default class MuseRecorder extends Vue {
   private k1: number = 0;
   private k2: number = 0;
   private n: number = 0;
-  private paused: boolean = false;
+  private paused: boolean = true;
+  private sessionsDetailsOpened: boolean = false;
 
   private created() {
     this.museClient = new MuseClient();
@@ -128,6 +156,8 @@ export default class MuseRecorder extends Vue {
   private async connectToMuse() {
     await this.museClient.connect();
     await this.museClient.start();
+
+    this.startSession();
 
     this.museClient.connectionStatus.subscribe(
       cS => this.connectionStatus = cS
@@ -203,8 +233,80 @@ export default class MuseRecorder extends Vue {
 </script>
 
 <style scoped lang="scss">
-.muse-recorder__controls {
+.muse-recorder__connection,
+.muse-recorder__session-control {
   position: absolute;
-  background: white;
+  background: transparent;
+  padding: 1em;
+}
+
+.muse-recorder__connection-icon,
+.muse-recorder__session-control-icon,
+.muse-recorder__session-details-icon {
+  color: white;
+  cursor: pointer;
+}
+
+.muse-recorder__connection {
+  top: 0;
+  right: 0;
+  font-size: 2em;
+  opacity: 1;
+  transition: opacity 1s;
+}
+
+.muse-recorder__connection--connected {
+  opacity: 0;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  .muse-recorder__session-control-icon {
+    color: blue;
+  }
+}
+
+.muse-recorder__session-control {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 1s;
+  display: flex;
+  flex-direction: column;
+  background: transparentize(black, 0.5);
+  color: white;
+
+  .muse-recorder__session-control-icon {
+    flex: 1;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.muse-recorder__main-controls {
+  display: flex;
+}
+
+.muse-recorder__session-details {
+  margin: auto;
+}
+
+.muse-recorder__viz-controls {
+  display: flex;
+  justify-content: space-between;
+
+  > * {
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+
+  pre {
+    width: 150px;
+    overflow: hidden;
+  }
 }
 </style>

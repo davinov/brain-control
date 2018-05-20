@@ -45,7 +45,8 @@ export default class FieldVizualisation extends Vue {
     this.updateColorFunction();
     this.scene.setColorMode(ColorModes.VELOCITY);
 
-    this.scene.start();
+    if (!this.paused)
+      this.scene.start();
   }
 
   beforeDestroy () {
@@ -54,6 +55,8 @@ export default class FieldVizualisation extends Vue {
   }
 
   formatNumberforGLSL (n: number): string {
+    if (_.isNaN(n))
+      return '0.'
     return n.toFixed(4);
   }
 

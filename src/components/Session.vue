@@ -142,4 +142,12 @@ export default class Session extends Vue {
   background-color: orange;
 }
 
+button {
+  background: none;
+  color: white;
+  text-decoration: underline;
+  border: none;
+  cursor: pointer;
+}
+
 </style>
