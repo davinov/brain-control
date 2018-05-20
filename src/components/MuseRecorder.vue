@@ -19,6 +19,15 @@
     </div>
 
     <div
+      class="muse-recorder__greeting"
+      :class="{'muse-recorder__greeting--connected': connectionStatus}"
+    >
+      <div style="font-size: 6em;">Do you feel in control</div>
+      <div style="font-size: 4em;">of what's happenning</div>
+      <div style="font-size: 8em;">in your brain?</div>
+    </div>
+
+    <div
       class="muse-recorder__connection"
       :class="{'muse-recorder__connection--connected': connectionStatus}"
     >
@@ -234,10 +243,32 @@ export default class MuseRecorder extends Vue {
 
 <style scoped lang="scss">
 .muse-recorder__connection,
-.muse-recorder__session-control {
+.muse-recorder__session-control,
+.muse-recorder__greeting {
   position: absolute;
   background: transparent;
   padding: 1em;
+}
+
+.muse-recorder__greeting {
+  padding-top: 0;
+  color: white;
+  text-align: center;
+  margin: auto;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 300;
+  filter: blur(1.5px);
+  opacity: 0.7;
+  transition: opacity 10s;
+}
+
+.muse-recorder__greeting--connected {
+  opacity: 0;
 }
 
 .muse-recorder__connection-icon,
