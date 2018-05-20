@@ -30,7 +30,7 @@ export default class FieldVizualisation extends Vue {
   }
 
   mounted () {
-    let canvas: HTMLCanvasElement = this.$el;
+    let canvas: HTMLCanvasElement = this.$el as HTMLCanvasElement;
     let ctxOptions = { antialias: true, alpha: false };
     let gl = canvas.getContext('webgl', ctxOptions) ||
     canvas.getContext('experimental-webgl', ctxOptions);
@@ -61,7 +61,7 @@ export default class FieldVizualisation extends Vue {
   }
 
   get GLSLcode () {
-    let codeLines = [];
+    let codeLines: string[] = [];
 
     codeLines.push(`v.x = 0.;`);
     codeLines.push(`v.y = 0.;`);

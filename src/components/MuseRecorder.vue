@@ -106,7 +106,7 @@
 import _ from 'lodash';
 import { Component, Inject, Vue } from 'vue-property-decorator';
 import { MuseClient } from 'muse-js';
-import { EEGRelativePowerBand, POWER_BANDS, FrequencyBand } from 'muse-js/dist/lib/process-samples';
+import { EEGRelativePowerBand, POWER_BANDS, FrequencyBand } from 'muse-js';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { bufferCount, map } from 'rxjs/operators';
@@ -175,6 +175,7 @@ export default class MuseRecorder extends Vue {
 
   private startSession() {
     this.currentSession = [];
+    // @ts-ignore
     this.currentSessionSubscription = (this.museClient.relativeBandPowers as Observable<EEGRelativePowerBand[]>)
       .pipe(
         bufferCount(100, 50)
@@ -207,7 +208,7 @@ export default class MuseRecorder extends Vue {
           return arbps;
         })
       ).subscribe(
-        (arbps) => {
+        (arbps: AveragedRelativeBandPowers) => {
           this.currentSession.push(Object.freeze(arbps));
           this.currentSession = _.takeRight(this.currentSession, 100);
           this.n = Math.min(this.currentSession.length * 5, 100);
