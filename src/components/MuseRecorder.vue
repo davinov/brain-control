@@ -171,6 +171,7 @@ export default class MuseRecorder extends Vue {
         (arbps) => {
           this.currentSession.push(Object.freeze(arbps));
           this.currentSession = _.takeRight(this.currentSession, 100);
+          this.n = this.currentSession.length;
           this.k1 = (
             arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
           ) / (

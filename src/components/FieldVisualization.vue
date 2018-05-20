@@ -24,7 +24,6 @@ export default class FieldVizualisation extends Vue {
   private timeStep: number = 0.01;
   private dropProbability: number = 0.009;
   private fadeout: number = .998;
-  // private colorMode: number = ColorModes.UNIFORM;
 
   get particleCount (): number {
     return Math.max(this.n * 500 * Math.pow(window.devicePixelRatio, 2), 1);
