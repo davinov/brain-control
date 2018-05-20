@@ -168,7 +168,7 @@ export default class MuseRecorder extends Vue {
     this.currentSession = [];
     this.currentSessionSubscription = (this.museClient.relativeBandPowers as Observable<EEGRelativePowerBand[]>)
       .pipe(
-        bufferCount(100, 10)
+        bufferCount(100, 50)
       ,
         map( (sessions: EEGRelativePowerBand[][]): EEGRelativePowerBand[] =>
           Object.keys(POWER_BANDS).map( (k): EEGRelativePowerBand => {
@@ -201,7 +201,7 @@ export default class MuseRecorder extends Vue {
         (arbps) => {
           this.currentSession.push(Object.freeze(arbps));
           this.currentSession = _.takeRight(this.currentSession, 100);
-          this.n = this.currentSession.length;
+          this.n = Math.min(this.currentSession.length * 5, 100);
           this.k1 = (
             arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
           ) / (
