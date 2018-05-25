@@ -21,6 +21,7 @@
     <div
       class="muse-recorder__greeting"
       :class="{'muse-recorder__greeting--connected': connectionStatus}"
+      v-if="n == 0"
     >
       <div style="font-size: 6em;">Do you feel in control</div>
       <div style="font-size: 4em;">of what's happenning</div>
@@ -178,7 +179,7 @@ export default class MuseRecorder extends Vue {
     // @ts-ignore
     this.currentSessionSubscription = (this.museClient.relativeBandPowers as Observable<EEGRelativePowerBand[]>)
       .pipe(
-        bufferCount(100, 50)
+        bufferCount(100, 25)
       ,
         map( (sessions: EEGRelativePowerBand[][]): EEGRelativePowerBand[] =>
           Object.keys(POWER_BANDS).map( (k): EEGRelativePowerBand => {
@@ -209,6 +210,8 @@ export default class MuseRecorder extends Vue {
         })
       ).subscribe(
         (arbps: AveragedRelativeBandPowers) => {
+          if ( _.some(arbps, v => _.isNaN(v) ) )
+            return;
           this.currentSession.push(Object.freeze(arbps));
           this.currentSession = _.takeRight(this.currentSession, 100);
           this.n = Math.min(this.currentSession.length * 5, 100);

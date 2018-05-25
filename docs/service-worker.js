@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.0.1/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.4ac06a64d17b64f924620a27a08e0aad.js"
+  "/precache-manifest.bd3a59bfa25e4a69b5a9a13791121dba.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "muse-recorder"});

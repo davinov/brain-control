@@ -21,12 +21,18 @@ export default class FieldVizualisation extends Vue {
   @Prop({ default: false })
   public paused: boolean;
 
+  get actuallyPaused (): boolean {
+    return this.paused && this.n > 0;
+  }
+
   private timeStep: number = 0.01;
   private dropProbability: number = 0.009;
   private fadeout: number = .998;
 
   get particleCount (): number {
-    return Math.max(this.n * 500 * Math.pow(window.devicePixelRatio, 2), 1);
+    return Math.max(
+      this.n * (window.innerHeight * window.innerWidth) / 5000 * Math.pow(window.devicePixelRatio, 2)
+    , 1);
   }
 
   mounted () {
@@ -45,7 +51,7 @@ export default class FieldVizualisation extends Vue {
     this.updateColorFunction();
     this.scene.setColorMode(ColorModes.VELOCITY);
 
-    if (!this.paused)
+    if (!this.actuallyPaused)
       this.scene.start();
   }
 
@@ -148,10 +154,10 @@ export default class FieldVizualisation extends Vue {
     this.updateColorFunction();
   }
 
-  @Watch('paused')
+  @Watch('actuallyPaused')
   togglePause () {
     if (this.scene)
-      this.scene[this.paused ? 'stop' : 'start']();
+      this.scene[this.actuallyPaused ? 'stop' : 'start']();
   }
 
   @Watch('particleCount')
@@ -170,6 +176,6 @@ export default class FieldVizualisation extends Vue {
 <style scoped lang="scss">
 .brain-particles {
   position: absolute;
-  filter: blur(1.2px) contrast(2.2);
+  filter: blur(1.1px) contrast(1.6);
 }
 </style>
