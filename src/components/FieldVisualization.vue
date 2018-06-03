@@ -5,15 +5,48 @@ import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import initScene from '../lib/field-play/scene';
 import ColorModes from '../lib/field-play/programs/colorModes';
 
+import { easeExpInOut } from 'd3-ease';
+
+function scale(x: number): number {
+  return easeExpInOut(x);
+}
+
 @Component
 export default class FieldVizualisation extends Vue {
   private scene: any;
 
   @Prop({ required: true })
-  public k1: number;
+  public alpha: number;
 
   @Prop({ required: true })
-  public k2: number;
+  public beta1: number;
+
+  @Prop({ required: true })
+  public beta2: number;
+
+  @Prop({ required: true })
+  public beta3: number;
+
+  @Prop({ required: true })
+  public gamma: number;
+
+  get k1(): number {
+    return scale(this.alpha);
+  };
+
+  get k2(): number {
+    return scale(this.gamma);
+  };
+
+  get k3(): number {
+    return scale(this.beta1);
+  };
+  get k4(): number {
+    return scale(this.beta2);
+  };
+  get k5(): number {
+    return scale(this.beta3);
+  };
 
   @Prop({ required: true })
   public n: number;
@@ -75,8 +108,9 @@ export default class FieldVizualisation extends Vue {
     codeLines.push(`float pi = tau / 2.;`);
     codeLines.push(`float l = length(p);`)
 
+
     if (this.k1 > 0) {
-      // CIRCLE-EYE: alpha
+      // CIRCLE-EYE: alpha (relaxation)
       let circle = {
         x: `p.y`,
         y: `-p.x`
@@ -85,20 +119,53 @@ export default class FieldVizualisation extends Vue {
       codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.y}) / pow(max(1., abs(3. * l) - 2. * tau), 3.);`);
     }
 
-    if (this.k2 > 0) {
-      // SQUARES: gamma
+    if (this.k5 > 0) {
+      // SQUARES: Hi beta (3)
       let squares = {
-        x: `sign(sin(p.y * 4.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.y * 4.)`,
-        y: `sign(-1. * sin(p.x * 4.)) / 2. - (1. - ${this.formatNumberforGLSL(this.k2)}) * sin(p.x * 4.)`
+        x: `sign(sin(p.y * 4.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k5)}) * sin(p.y * 4.)`,
+        y: `sign(-1. * sin(p.x * 4.)) / 2. - (1. - ${this.formatNumberforGLSL(this.k5)}) * sin(p.x * 4.)`
       };
-      codeLines.push(`float d = (abs(p.x) + abs(p.y)) * 2. / 3.;`)
-      codeLines.push(`if ( (d < tau) && (d > pi / 2.) ) {`);
-        codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k2)}, 3.) * (${squares.x});`);
-        codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k2)}, 3.) * (${squares.y});`);
+      codeLines.push(`float sd = (abs(p.x) + abs(p.y)) * 2. / 3.;`);
+      codeLines.push(`if ( (sd < tau) && (sd > pi / 2.) ) {`);
+        codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k5)}, 3.) * (${squares.x});`);
+        codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k5)}, 3.) * (${squares.y});`);
       codeLines.push(`}`);
     }
 
-    let steadyK = Math.pow( (1 - Math.max(this.k1, this.k2)) * Math.pow(this.k1 + this.k2, 2), 2);
+    if (this.k2 > 0) {
+      // WHRIL: gamma
+      let whirl = {
+        x: `(p.y + p.x) / pow(l, 2.) * atan(l) / tau / max(pow(l, 2.), 1.)`,
+        y: `(- p.x + p.y) / pow(l, 2.) * atan(l) / tau / max(pow(l, 2.), 1.)`
+      };
+      codeLines.push(`v.x -= pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${whirl.x});`);
+      codeLines.push(`v.y -= pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${whirl.y});`);
+    }
+
+    if (this.k3 > 0) {
+      // STAR: Low-beta (1)
+      let star = {
+        x: `((-1./ p.x / 50.) + (-1./ (p.y + p.x) / 100.)) / max(1., pow(l, 2.))`,
+        y: `((-1. / p.y / 50.) + (1. / (p.x - p.y) / 100.) ) / max(1., pow(l, 2.))`
+      };
+      codeLines.push(`v.x -= pow(${this.formatNumberforGLSL(this.k3)}, 2.) * 4. * (${star.x});`);
+      codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k3)}, 2.) * 4. * (${star.y});`);
+    }
+
+    if (this.k4 > 0) {
+      codeLines.push(`float x = sin((p.x + p.y) * 3.);`)
+      codeLines.push(`float y = sin((p.x - p.y) * 3.);`)
+      codeLines.push(`float cd = max(max(abs(p.x), abs(p.y)) - 0.5, 0.);`)
+      // CLOVERFLIED processing units (cpu-like): Mid Beta (2)
+      let cloverfield = {
+        x: `4. * ((-1. / x / 50.) + (-1. / (y + x) / 100.) ) / max(1., pow(cd, 6.))`,
+        y: `4. * ((-1. / y / 50.) + (1.  / (x - y) / 100.) ) / max(1., pow(cd, 6.))`
+      };
+      codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k4)}, 4.) * (${cloverfield.x});`);
+      codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k4)}, 4.) * (${cloverfield.y});`);
+    }
+
+    let steadyK = Math.pow( (1 - Math.max(this.k1, this.k2, this.k3, this.k4, this.k5)) * Math.pow(this.k1 + this.k2 + this.k3 + this.k4 + this.k5, 1/3), 2);
     codeLines.push(`v.x += ${this.formatNumberforGLSL(steadyK)} * p.x / pow(l, 2.);`);
     codeLines.push(`v.y += ${this.formatNumberforGLSL(steadyK)} * p.y / pow(l, 2.);`);
 
@@ -123,7 +190,13 @@ export default class FieldVizualisation extends Vue {
   }
 
   get colorFunction() {
-    let k = Math.pow((this.k2 - this.k1) / 2 + 0.5, 2);
+    let ka = Math.pow((this.k2 - this.k1) / 2 + 0.5, 2);
+    let kb = Math.pow((this.k3 + this.k4 + this.k5) / 3, 2);
+    let k = ka + (kb);
+
+    // clamp
+    k = Math.min(1, k);
+    k = Math.max(0, k);
 
     return `
       vec4 get_color(vec2 p) {

@@ -20,7 +20,7 @@
         :key="serie"
       >
         <div class="session__legend__item__color"></div>
-        <span>{{ serie }}</span>
+        <span>{{ serie }}</span> - <span> {{ lastSessionPointForSerie(serie) }} </span>
       </div>
     </div>
 
@@ -31,6 +31,7 @@
 </template>
 
 <script lang="ts">
+import _ from 'lodash';
 import { Component, Vue, Prop } from 'vue-property-decorator';
 import { AveragedRelativeBandPowers } from './MuseRecorder.vue';
 import { line } from 'd3-shape';
@@ -62,6 +63,16 @@ export default class Session extends Vue {
     return scaleLinear()
       .domain([0, 0.5])
       .range([this.height, 0]);
+  }
+
+  get lastSessionPointForSerie () {
+    let lastSessionPoint = _.last(this.sessionData);
+    return (serie) => {
+      if ( lastSessionPoint && lastSessionPoint[serie] )
+        return lastSessionPoint[serie];
+      else
+        return '-';
+    }
   }
 
   private lineForSerie(serie: string): string | null {
@@ -122,6 +133,15 @@ export default class Session extends Vue {
 .session__serie--beta {
   stroke: red;
 }
+.session__serie--beta_1 {
+  stroke: darkred;
+}
+.session__serie--beta_2 {
+  stroke: crimson;
+}
+.session__serie--beta_3 {
+  stroke: orangered;
+}
 .session__serie--gamma {
   stroke: orange;
 }
@@ -137,6 +157,15 @@ export default class Session extends Vue {
 }
 .session__legend__item--beta .session__legend__item__color {
   background-color: red;
+}
+.session__legend__item--beta_1 .session__legend__item__color {
+  background-color: darkred;
+}
+.session__legend__item--beta_2 .session__legend__item__color {
+  background-color: crimson;
+}
+.session__legend__item--beta_3 .session__legend__item__color {
+  background-color: orangered;
 }
 .session__legend__item--gamma .session__legend__item__color {
   background-color: orange;

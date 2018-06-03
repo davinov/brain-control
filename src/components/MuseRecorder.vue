@@ -11,8 +11,11 @@
         :paused="paused"
       ></particles-visualization> -->
       <field-visualization
-        :k1="k1"
-        :k2="k2"
+        :alpha="alpha"
+        :beta1="beta1"
+        :beta2="beta2"
+        :beta3="beta3"
+        :gamma="gamma"
         :n="n"
         :paused="paused"
       ></field-visualization>
@@ -66,20 +69,44 @@
           </button>
           <input
             type="range"
-            v-model.number="k1"
+            v-model.number="alpha"
             min="0"
             max="1"
             step="0.01"
           />
-          <pre>k1: {{ k1 }}</pre>
+          <pre>alpha: {{ alpha }}</pre>
           <input
             type="range"
-            v-model.number="k2"
+            v-model.number="beta1"
             min="0"
             max="1"
             step="0.01"
           />
-          <pre>k2: {{ k2 }}</pre>
+          <pre>beta1: {{ beta1 }}</pre>
+          <input
+            type="range"
+            v-model.number="beta2"
+            min="0"
+            max="1"
+            step="0.01"
+          />
+          <pre>beta2: {{ beta2 }}</pre>
+          <input
+            type="range"
+            v-model.number="beta3"
+            min="0"
+            max="1"
+            step="0.01"
+          />
+          <pre>beta3: {{ beta3 }}</pre>
+          <input
+            type="range"
+            v-model.number="gamma"
+            min="0"
+            max="1"
+            step="0.01"
+          />
+          <pre>gamma: {{ gamma }}</pre>
           <input
             type="range"
             v-model.number="n"
@@ -153,8 +180,11 @@ export default class MuseRecorder extends Vue {
 
   private currentSession: AveragedRelativeBandPowers[] = [];
 
-  private k1: number = 0;
-  private k2: number = 0;
+  private alpha: number = 0;
+  private beta1: number = 0;
+  private beta2: number = 0;
+  private beta3: number = 0;
+  private gamma: number = 0;
   private n: number = 0;
   private paused: boolean = true;
   private sessionsDetailsOpened: boolean = false;
@@ -215,15 +245,30 @@ export default class MuseRecorder extends Vue {
           this.currentSession.push(Object.freeze(arbps));
           this.currentSession = _.takeRight(this.currentSession, 100);
           this.n = Math.min(this.currentSession.length * 5, 100);
-          this.k1 = (
+          this.alpha = (
             arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
           ) / (
             Math.max(...this.currentSession.map( d => d.ALPHA )) - Math.min(...this.currentSession.map( d => d.ALPHA ))
           );
-          this.k2 = (
+          this.gamma = (
             arbps.GAMMA - Math.min(...this.currentSession.map( d => d.GAMMA ))
           ) / (
             Math.max(...this.currentSession.map( d => d.GAMMA )) - Math.min(...this.currentSession.map( d => d.GAMMA ))
+          );
+          this.beta1 = (
+            arbps.BETA_1 - Math.min(...this.currentSession.map( d => d.BETA_1 ))
+          ) / (
+            Math.max(...this.currentSession.map( d => d.BETA_1 )) - Math.min(...this.currentSession.map( d => d.BETA_1 ))
+          );
+          this.beta2 = (
+            arbps.BETA_2 - Math.min(...this.currentSession.map( d => d.BETA_2 ))
+          ) / (
+            Math.max(...this.currentSession.map( d => d.BETA_2 )) - Math.min(...this.currentSession.map( d => d.BETA_2 ))
+          );
+          this.beta3 = (
+            arbps.BETA_3 - Math.min(...this.currentSession.map( d => d.BETA_3 ))
+          ) / (
+            Math.max(...this.currentSession.map( d => d.BETA_3 )) - Math.min(...this.currentSession.map( d => d.BETA_3 ))
           );
         }
       );
