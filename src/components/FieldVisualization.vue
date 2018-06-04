@@ -143,13 +143,9 @@ export default class FieldVizualisation extends Vue {
     }
 
     if (this.k3 > 0) {
-      // STAR: Low-beta (1)
-      let star = {
-        x: `((-1./ p.x / 50.) + (-1./ (p.y + p.x) / 100.)) / max(1., pow(l, 2.))`,
-        y: `((-1. / p.y / 50.) + (1. / (p.x - p.y) / 100.) ) / max(1., pow(l, 2.))`
-      };
-      codeLines.push(`v.x -= pow(${this.formatNumberforGLSL(this.k3)}, 2.) * 4. * (${star.x});`);
-      codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k3)}, 2.) * 4. * (${star.y});`);
+      // explode idle: Low-beta (1)
+      codeLines.push(`v.x += ${this.formatNumberforGLSL(this.k3)} * p.x / pow(l, 2.);`);
+      codeLines.push(`v.y += ${this.formatNumberforGLSL(this.k3)} * p.y / pow(l, 2.);`);
     }
 
     if (this.k4 > 0) {
@@ -164,10 +160,6 @@ export default class FieldVizualisation extends Vue {
       codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k4)}, 4.) * (${cloverfield.x});`);
       codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k4)}, 4.) * (${cloverfield.y});`);
     }
-
-    let steadyK = Math.pow( (1 - Math.max(this.k1, this.k2, this.k3, this.k4, this.k5)) * Math.pow(this.k1 + this.k2 + this.k3 + this.k4 + this.k5, 1/3), 2);
-    codeLines.push(`v.x += ${this.formatNumberforGLSL(steadyK)} * p.x / pow(l, 2.);`);
-    codeLines.push(`v.y += ${this.formatNumberforGLSL(steadyK)} * p.y / pow(l, 2.);`);
 
     codeLines.push(`v.x /= 2.;`);
     codeLines.push(`v.y /= 2.;`);
@@ -192,7 +184,7 @@ export default class FieldVizualisation extends Vue {
   get colorFunction() {
     let ka = Math.pow((this.k2 - this.k1) / 2 + 0.5, 2);
     let kb = Math.pow((this.k3 + this.k4 + this.k5) / 3, 2);
-    let k = ka + (kb);
+    let k = ka + kb;
 
     // clamp
     k = Math.min(1, k);
