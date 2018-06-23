@@ -29,6 +29,7 @@ export default function updatePositionProgram(ctx) {
     updateParticlesPositions,
     updateParticlesCount,
     prepareToDraw,
+    updateVariable
   };
 
   function updateCode(vectorField) {
@@ -43,7 +44,13 @@ export default function updatePositionProgram(ctx) {
 
     if (ctx.colorMode === ColorMode.VELOCITY) readVelocity.requestSpeedUpdate();
   }
-  
+
+  function updateVariable(varName, value) {
+    var uniformLocation = gl.getUniformLocation(updateProgram.program, `u_${varName}`);
+    gl.useProgram(updateProgram.program);
+    gl.uniform1f(uniformLocation, value);
+  }
+
   function updateParticlesCount(x, y) {
     particleStateResolution = ctx.particleStateResolution;
 

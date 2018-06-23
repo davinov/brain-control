@@ -108,47 +108,45 @@ export default class FieldVizualisation extends Vue {
     codeLines.push(`float pi = tau / 2.;`);
     codeLines.push(`float l = length(p);`)
 
-
-    if (this.k1 > 0) {
-      // CIRCLE-EYE: alpha (relaxation)
+    codeLines.push(`if (u_k1 > .0) {`)
       let circle = {
         x: `p.y`,
         y: `-p.x`
       }
-      codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.x}) / pow(max(1., abs(3. * l) - 2. * tau), 3.);`);
-      codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k1)}, 2.) * (${circle.y}) / pow(max(1., abs(3. * l) - 2. * tau), 3.);`);
-    }
+      codeLines.push(`v.x += pow(u_k1, 2.) * (${circle.x}) / pow(max(1., abs(3. * l) - 2. * tau), 3.);`);
+      codeLines.push(`v.y += pow(u_k1, 2.) * (${circle.y}) / pow(max(1., abs(3. * l) - 2. * tau), 3.);`);
+    codeLines.push(`}`);
 
-    if (this.k5 > 0) {
-      // SQUARES: Hi beta (3)
+    // SQUARES: Hi beta (3)
+    codeLines.push(`if (u_k5 > .0) {`)
       let squares = {
-        x: `sign(sin(p.y * 4.)) / 2. + (1. - ${this.formatNumberforGLSL(this.k5)}) * sin(p.y * 4.)`,
-        y: `sign(-1. * sin(p.x * 4.)) / 2. - (1. - ${this.formatNumberforGLSL(this.k5)}) * sin(p.x * 4.)`
+        x: `sign(sin(p.y * 4.)) / 2. + (1. - u_k5) * sin(p.y * 4.)`,
+        y: `sign(-1. * sin(p.x * 4.)) / 2. - (1. - u_k5) * sin(p.x * 4.)`
       };
       codeLines.push(`float sd = (abs(p.x) + abs(p.y)) * 2. / 3.;`);
       codeLines.push(`if ( (sd < tau) && (sd > pi / 2.) ) {`);
-        codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k5)}, 3.) * (${squares.x});`);
-        codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k5)}, 3.) * (${squares.y});`);
+        codeLines.push(`v.x += pow(u_k5, 3.) * (${squares.x});`);
+        codeLines.push(`v.y += pow(u_k5, 3.) * (${squares.y});`);
       codeLines.push(`}`);
-    }
+    codeLines.push(`}`);
 
-    if (this.k2 > 0) {
-      // WHRIL: gamma
+    // WHRIL: gamma
+    codeLines.push(`if (u_k2 > .0) {`)
       let whirl = {
         x: `(p.y + p.x) / pow(l, 2.) * atan(l) / tau / max(pow(l, 2.), 1.)`,
         y: `(- p.x + p.y) / pow(l, 2.) * atan(l) / tau / max(pow(l, 2.), 1.)`
       };
-      codeLines.push(`v.x -= pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${whirl.x});`);
-      codeLines.push(`v.y -= pow(${this.formatNumberforGLSL(this.k2)}, 2.) * (${whirl.y});`);
-    }
+      codeLines.push(`v.x -= pow(u_k2, 2.) * (${whirl.x});`);
+      codeLines.push(`v.y -= pow(u_k2, 2.) * (${whirl.y});`);
+    codeLines.push(`}`);
 
-    if (this.k3 > 0) {
-      // explode idle: Low-beta (1)
-      codeLines.push(`v.x += ${this.formatNumberforGLSL(this.k3)} * p.x / pow(l, 2.);`);
-      codeLines.push(`v.y += ${this.formatNumberforGLSL(this.k3)} * p.y / pow(l, 2.);`);
-    }
+    // explode idle: Low-beta (1)
+    codeLines.push(`if (u_k3 > .0) {`)
+      codeLines.push(`v.x += u_k3 * p.x / pow(l, 2.);`);
+      codeLines.push(`v.y += u_k3 * p.y / pow(l, 2.);`);
+    codeLines.push(`}`);
 
-    if (this.k4 > 0) {
+    codeLines.push(`if (u_k4 > .0) {`)
       codeLines.push(`float x = sin((p.x + p.y) * 3.);`)
       codeLines.push(`float y = sin((p.x - p.y) * 3.);`)
       codeLines.push(`float cd = max(max(abs(p.x), abs(p.y)) - 0.5, 0.);`)
@@ -157,9 +155,9 @@ export default class FieldVizualisation extends Vue {
         x: `4. * ((-1. / x / 50.) + (-1. / (y + x) / 100.) ) / max(1., pow(cd, 6.))`,
         y: `4. * ((-1. / y / 50.) + (1.  / (x - y) / 100.) ) / max(1., pow(cd, 6.))`
       };
-      codeLines.push(`v.x += pow(${this.formatNumberforGLSL(this.k4)}, 4.) * (${cloverfield.x});`);
-      codeLines.push(`v.y += pow(${this.formatNumberforGLSL(this.k4)}, 4.) * (${cloverfield.y});`);
-    }
+      codeLines.push(`v.x += pow(u_k4, 4.) * (${cloverfield.x});`);
+      codeLines.push(`v.y += pow(u_k4, 4.) * (${cloverfield.y});`);
+    codeLines.push(`}`);
 
     codeLines.push(`v.x /= 2.;`);
     codeLines.push(`v.y /= 2.;`);
@@ -181,7 +179,21 @@ export default class FieldVizualisation extends Vue {
     this.scene.vectorFieldEditorState.setCode(this.GLSLcode);
   }
 
-  get colorFunction() {
+  updateVariable (varName, value) {
+    if (!this.scene)
+      return;
+
+    this.scene.vectorFieldEditorState.updateVariable(varName, value);
+  }
+
+  updateColorVariable (value) {
+    if (!this.scene)
+      return;
+
+    this.scene.updateColorVariable(value);
+  }
+
+  get kColor () {
     let ka = Math.pow((this.k2 - this.k1) / 2 + 0.5, 2);
     let kb = Math.pow((this.k3 + this.k4 + this.k5) / 3, 2);
     let k = ka + kb;
@@ -190,6 +202,10 @@ export default class FieldVizualisation extends Vue {
     k = Math.min(1, k);
     k = Math.max(0, k);
 
+    return k;
+  }
+
+  get colorFunction() {
     return `
       vec4 get_color(vec2 p) {
         vec2 velocity = get_velocity(p);
@@ -197,7 +213,7 @@ export default class FieldVizualisation extends Vue {
         float hue = 0.05 + (1. - speed) * 0.5;
         float hue1 = 1. - pow(hue, 3.) / 2. + 0.15;
         float hue2 = .5 + pow(hue, 3.) / 2.;
-        hue = ${this.formatNumberforGLSL(k)} * hue1 + (1. - ${this.formatNumberforGLSL(k)}) * hue2;
+        hue = u_k * hue1 + (1. - u_k) * hue2;
         return vec4(hsv2rgb(vec3(hue, 0.9, 1.)), 1.0);
       }`;
   }
@@ -209,14 +225,30 @@ export default class FieldVizualisation extends Vue {
     this.scene.setColorFunction(this.colorFunction);
   }
 
-  @Watch('GLSLcode')
-  GLSLcodeUpdated () {
-    this.updateVectorField();
+  @Watch('k1')
+  k1Updated () {
+    this.updateVariable('k1', this.k1);
+  }
+  @Watch('k2')
+  k2Updated () {
+    this.updateVariable('k2', this.k2);
+  }
+  @Watch('k3')
+  k3Updated () {
+    this.updateVariable('k3', this.k3);
+  }
+  @Watch('k4')
+  k4Updated () {
+    this.updateVariable('k4', this.k4);
+  }
+  @Watch('k5')
+  k5Updated () {
+    this.updateVariable('k5', this.k5);
   }
 
-  @Watch('colorFunction')
-  colorFunctionToUpdate () {
-    this.updateColorFunction();
+  @Watch('kColor')
+  kColorUpdated () {
+    this.updateColorVariable(this.kColor);
   }
 
   @Watch('actuallyPaused')

@@ -152,6 +152,7 @@ export default function initScene(gl) {
     getColorFunction,
 
     vectorFieldEditorState,
+    updateColorVariable,
 
     inputsModel,
 
@@ -197,6 +198,10 @@ export default function initScene(gl) {
   function setColorFunction(code) {
     ctx.colorFunction = code;
     drawProgram.updateColorMode(ctx.colorMode);
+  }
+
+  function updateColorVariable(value) {
+    drawProgram.updateColorVariable(value);
   }
 
   function getColorFunction() {

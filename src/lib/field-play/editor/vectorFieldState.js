@@ -25,6 +25,7 @@ export default function createVectorFieldEditorState(drawProgram) {
     getCode,
     setCode,
     dispose,
+    updateVariable,
 
     // These properties are for UI only
     code: currentVectorFieldCode,
@@ -131,5 +132,9 @@ export default function createVectorFieldEditorState(drawProgram) {
         }
       }
     });
+  }
+
+  function updateVariable(varName, value) {
+    drawProgram.updateVariable(varName, value);
   }
 }

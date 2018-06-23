@@ -15,6 +15,7 @@ export default function shaderBasedColor(colorMode, vfCode, colorCode) {
   function getVariables() {
     return `
 uniform vec2 u_velocity_range;
+uniform float u_k;
 varying vec4 v_particle_color;
 
 ${udf.getDefines()}

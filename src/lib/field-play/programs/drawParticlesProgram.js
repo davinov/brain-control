@@ -29,7 +29,9 @@ export default function drawParticlesProgram(ctx) {
     updateParticlesPositions,
     drawParticles,
     updateCode,
-    updateColorMode
+    updateColorMode,
+    updateVariable,
+    updateColorVariable
   }
 
   function initPrograms() {
@@ -70,8 +72,23 @@ export default function drawParticlesProgram(ctx) {
     ctx.frame = 0;
     currentVectorField = vfCode;
     updatePositionProgram.updateCode(vfCode);
-
+    
     initDrawProgram();
+  }
+
+  function updateVariableForDrawProgram(varName, value) {
+    var uniformLocation = gl.getUniformLocation(drawProgram.program, `u_${varName}`);
+    gl.useProgram(drawProgram.program);
+    gl.uniform1f(uniformLocation, value);
+  }
+
+  function updateVariable(varName, value) {
+    updatePositionProgram.updateVariable(varName, value);
+    updateVariableForDrawProgram(varName, value);
+  }
+
+  function updateColorVariable(value) {
+    updateVariableForDrawProgram('k', value);
   }
 
   function updateParticlesCount() {

@@ -19,6 +19,12 @@ uniform vec4 cursor;
 // TODO: use inputN instead.
 uniform sampler2D u_audio;
 
+uniform float u_k1;
+uniform float u_k2;
+uniform float u_k3;
+uniform float u_k4;
+uniform float u_k5;
+
 #define PI 3.1415926535897932384626433832795
 
 ${getInputUniforms()}
