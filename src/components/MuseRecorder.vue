@@ -1,6 +1,6 @@
 <template>
   <div class="muse-recorder">
-    <div>
+    <div class="muse-recorder__viz-container">
       <!-- <visualization
         :k1="k1"
         :k2="k2"
@@ -26,12 +26,28 @@
       :class="{'muse-recorder__greeting--connected': connectionStatus}"
       v-if="n == 0"
     >
-      <div style="font-size: 6em;">Do you feel in control</div>
-      <div style="font-size: 4em;">of what's happenning</div>
-      <div style="font-size: 8em;">in your brain?</div>
+      <div class="muse-recorder__greeting-title">
+        <div style="font-size: 6em;">Do you feel in control</div>
+        <div style="font-size: 4em;">of what's happenning</div>
+        <div style="font-size: 8em;">in your brain?</div>
+      </div>
+      <div class="muse-recorder__greeting-tuto">
+        <div class="muse-recorder__greeting-tuto-intro">
+          Turn on the headband, adjust it on your forehead and observe...
+        </div>
+        <div
+          class="muse-recorder__greeting-tuto-button"
+          @click="connectToMuse()"
+        >
+          Start <font-awesome-icon icon="play" style="font-size:smaller"/>
+        </div>
+        <div class="muse-recorder__greeting-tuto-outro">
+          When your finished or before passing the headband to someone else, hit STOP <font-awesome-icon icon="stop" style="font-size:smaller"/>
+        </div>
+      </div>
     </div>
 
-    <div
+    <!-- <div
       class="muse-recorder__connection"
       :class="{'muse-recorder__connection--connected': connectionStatus}"
     >
@@ -40,9 +56,124 @@
         :icon="['fab', connectionStatus ? 'bluetooth-b' : 'bluetooth']"
         @click="connectionStatus ? disconnect() : connectToMuse()"
       />
+    </div> -->
+
+    <div
+      class="muse-recorder__session-details"
+      v-if="sessionsDetailsOpened"
+    >
+      <Session
+        v-if="currentSession.length"
+        :sessionData="currentSession"
+      >
+      </Session>
+      <div v-else>
+        No session data
+      </div>
     </div>
 
     <div
+      class="muse-recorder__chart-toggle"
+      v-if="sessionInProgress"
+      @click="sessionsDetailsOpened = !sessionsDetailsOpened"
+    >
+      <font-awesome-icon :icon="['fas', sessionsDetailsOpened ? 'times' : 'chart-line']"  />
+    </div>
+
+    <div
+      class="muse-recorder__stop-button"
+      v-if="sessionInProgress"
+      @click="stopSession()"
+    >
+      Stop <font-awesome-icon icon="stop" />
+    </div>
+
+
+    <div
+      class="muse-recorder__viz-controls"
+      v-if="vizControlsDisplayed"
+    >
+      <div></div>
+      <button
+        @click="paused = !paused"
+      > Play/pause viz
+      </button>
+      <div>
+        <input
+          type="range"
+          v-model.number="alpha"
+          min="0"
+          max="1"
+          step="0.01"
+        />
+        <pre>alpha: {{ alpha }}</pre>
+      </div>
+      <div>
+        <input
+          type="range"
+          v-model.number="beta1"
+          min="0"
+          max="1"
+          step="0.01"
+        />
+        <pre>beta1: {{ beta1 }}</pre>
+      </div>
+      <div>
+        <input
+          type="range"
+          v-model.number="beta2"
+          min="0"
+          max="1"
+          step="0.01"
+        />
+        <pre>beta2: {{ beta2 }}</pre>
+      </div>
+      <div>
+        <input
+          type="range"
+          v-model.number="beta3"
+          min="0"
+          max="1"
+          step="0.01"
+        />
+        <pre>beta3: {{ beta3 }}</pre>
+      </div>
+      <div>
+        <input
+          type="range"
+          v-model.number="gamma"
+          min="0"
+          max="1"
+          step="0.01"
+        />
+        <pre>gamma: {{ gamma }}</pre>
+      </div>
+      <div>
+        <input
+          type="range"
+          v-model.number="n"
+          min="0"
+          max="100"
+          step="1"
+        />
+        <pre>n: {{ n }}</pre>
+      </div>
+      <button
+        @click="reload()"
+      > Not working? Reload the page
+      </button>
+    </div>
+
+    <div
+      class="muse-recorder__viz-controls-toggle"
+      @click="toggleVizControlsDisplayed"
+    >
+      <font-awesome-icon
+        :icon="['fas', vizControlsDisplayed ? 'times' : 'sliders-h']"
+      />
+    </div>
+
+    <!-- <div
       class="muse-recorder__session-control"
       v-if="true || connectionStatus"
     >
@@ -62,60 +193,6 @@
         class="muse-recorder__session-details"
         v-if="sessionsDetailsOpened"
       >
-        <div class="muse-recorder__viz-controls">
-          <button
-            @click="paused = !paused"
-          > Pause viz
-          </button>
-          <input
-            type="range"
-            v-model.number="alpha"
-            min="0"
-            max="1"
-            step="0.01"
-          />
-          <pre>alpha: {{ alpha }}</pre>
-          <input
-            type="range"
-            v-model.number="beta1"
-            min="0"
-            max="1"
-            step="0.01"
-          />
-          <pre>beta1: {{ beta1 }}</pre>
-          <input
-            type="range"
-            v-model.number="beta2"
-            min="0"
-            max="1"
-            step="0.01"
-          />
-          <pre>beta2: {{ beta2 }}</pre>
-          <input
-            type="range"
-            v-model.number="beta3"
-            min="0"
-            max="1"
-            step="0.01"
-          />
-          <pre>beta3: {{ beta3 }}</pre>
-          <input
-            type="range"
-            v-model.number="gamma"
-            min="0"
-            max="1"
-            step="0.01"
-          />
-          <pre>gamma: {{ gamma }}</pre>
-          <input
-            type="range"
-            v-model.number="n"
-            min="0"
-            max="100"
-            step="1"
-          />
-          <pre>n: {{ n }}</pre>
-        </div>
         <Session
           v-if="currentSession.length"
           :sessionData="currentSession"
@@ -125,6 +202,86 @@
           No session data
         </div>
       </div>
+    </div> -->
+
+
+    <div
+      class="muse-recorder__info-panel"
+      v-if="infoPanelOpened"
+    >
+      <div>
+        <div
+          class="muse-recorder__greeting-tuto-button"
+          @click="infoPanelOpened = false"
+        >
+          Close
+        </div>
+        <p>
+          <strong>What is this installation?</strong>
+        </p>
+        <p>
+          This installation uses a headband to listen to your brain eletrical rythms.<br/>
+          It then computes the power of particular rythms and translates them into a particles vizualisation.
+        </p>
+        <p>
+          These rythms, called "Alpha", "Beta" and "Gamma" waves are the object of many scientific research to date.
+          What they represent in tems of "state of mind" is not that easy to determine, and a scientific consensus about them is not yet reached.<br/>
+          Still, there is many knowledge and information about them in books and on the web, which I used to create this art: <br/>
+          <ul>
+            <li>alpha waves are up in calm state</li>
+            <li>beta waves are present when you're awake, and are divised in three:
+              <ul>
+                <li>low-beta indicates regular awakeness, a "fast idle" mind</li>
+                <li>mid-beta could appear when engaging or actively figuring something out</li>
+                <li>high-beta would be the sign of highly complex thought, integrating new experiences, high anxiety or excitement</li>
+              </ul>
+            </li>
+            <li>it's speculated that gamma rhythms modulate perception and consciousness, and that a greater presence of gamma relates to expanded consciousness and spiritual emergence</li>
+          </ul>
+          Treat these interpretations with caution: they are not scientifcally endorsed and perception could vary a lot from one individual to another.
+        </p>
+        <p>
+          It's easy for some people to control their brainwaves in a way, while it's quite difficult to impossible for others.
+          Take some time to try to calm yoursel or concentrate on something, or just let your mind wander and see what happens.
+          One simple exercice some manage very well is to close your eyes for a few seconds and empty your mind: for some people ths triggers a load of alpha waves, which make the light blue circling vortex appear.
+        </p>
+        <p>
+          It's very important to reset the device with the Stop button each time the headband changes heads.
+          The levels can be different among people, so the system auto-calibrates in some seconds on the beginning of each session.
+          Hitting stop/start reset this calibration.
+        </p>
+        <p>
+          I've been able to create this based on these amazing libraries:
+          <ul>
+              <li>muse-js by Uri Shaked</li>
+              <li>field-play by Andrei Kashcha</li>
+              <li>DSP.js by Corban Brook</li>
+          </ul>
+        </p>
+        <p>
+          Intrigued? A question? Wanna talk about it or just need some help?<br/>
+          Find David at Barrio Wonderever or contact me on Twitter or GitHub @davinov
+        </p>
+        <p>
+          If you have Muse headband and a web-bluetooth enabled browser (Chrome on Android or Mac), you can reproduce at home with https://david.nowinsky.net/brain-control<br/>
+          Source code is available on https://github.com/davinov/brain-control
+        </p>
+        <div
+          class="muse-recorder__greeting-tuto-button"
+          @click="infoPanelOpened = false"
+        >
+          Close
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="muse-recorder__info-toggle"
+      @click="infoPanelOpened = !infoPanelOpened"
+    >
+      <font-awesome-icon
+        :icon="['fas', infoPanelOpened ? 'times' : 'info-circle']"
+      />
     </div>
 
   </div>
@@ -152,11 +309,20 @@ import faPlayCircle from '@fortawesome/fontawesome-free-regular/faPlayCircle';
 import faPauseCircle from '@fortawesome/fontawesome-free-regular/faPauseCircle';
 import faCaretSquareDown from '@fortawesome/fontawesome-free-regular/faCaretSquareDown';
 import faCaretSquareUp from '@fortawesome/fontawesome-free-regular/faCaretSquareUp';
+import faPlay from '@fortawesome/fontawesome-free-solid/faPlay';
+import faStop from '@fortawesome/fontawesome-free-solid/faStop';
+import faChartLine from '@fortawesome/fontawesome-free-solid/faChartLine';
+import faInfoCircle from '@fortawesome/fontawesome-free-solid/faInfoCircle';
+import faSyncAlt from '@fortawesome/fontawesome-free-solid/faSyncAlt';
+import faSlidersH from '@fortawesome/fontawesome-free-solid/faSlidersH';
+import faTimes from '@fortawesome/fontawesome-free-solid/faTimes';
 
 fontawesome.library.add(
   faBluetooth, faBluetoothB,
   faPlayCircle, faPauseCircle,
-  faCaretSquareDown, faCaretSquareUp
+  faCaretSquareDown, faCaretSquareUp,
+  faPlay, faStop,
+  faChartLine, faInfoCircle, faSyncAlt, faSlidersH, faTimes
 );
 
 export interface AveragedRelativeBandPowers {
@@ -177,6 +343,8 @@ export default class MuseRecorder extends Vue {
   private connectionStatus: boolean = false;
   private sessionInProgress: boolean = false;
   private currentSessionSubscription: Subscription;
+  private vizControlsDisplayed: boolean = false;
+  private infoPanelOpened: boolean = false;
 
   private currentSession: AveragedRelativeBandPowers[] = [];
 
@@ -194,14 +362,15 @@ export default class MuseRecorder extends Vue {
   }
 
   private async connectToMuse() {
-    await this.museClient.connect();
-    await this.museClient.start();
+    if (!this.connectionStatus) {
+      await this.museClient.connect();
+      await this.museClient.start();
+      this.museClient.connectionStatus.subscribe(
+        cS => this.connectionStatus = cS
+      );
+    }
 
     this.startSession();
-
-    this.museClient.connectionStatus.subscribe(
-      cS => this.connectionStatus = cS
-    );
   }
 
   private startSession() {
@@ -284,6 +453,14 @@ export default class MuseRecorder extends Vue {
     this.paused = true;
   }
 
+  private toggleVizControlsDisplayed() {
+    this.vizControlsDisplayed = !this.vizControlsDisplayed;
+  }
+
+  private reload() {
+    window.location.reload();
+  }
+
   private beforeDestroy() {
     this.stopSession();
   }
@@ -291,16 +468,37 @@ export default class MuseRecorder extends Vue {
 </script>
 
 <style scoped lang="scss">
+.muse-recorder {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.muse-recorder__viz-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 .muse-recorder__connection,
 .muse-recorder__session-control,
-.muse-recorder__greeting {
+.muse-recorder__greeting,
+.muse-recorder__viz-controls-toggle,
+.muse-recorder__viz-controls,
+.muse-recorder__stop-button,
+.muse-recorder__chart-toggle,
+.muse-recorder__session-details,
+.muse-recorder__info-toggle,
+.muse-recorder__info-panel {
   position: absolute;
   background: transparent;
   padding: 1em;
+  box-sizing: border-box;
 }
 
 .muse-recorder__greeting {
-  padding-top: 0;
+  padding: 0;
   color: white;
   text-align: center;
   margin: auto;
@@ -310,10 +508,45 @@ export default class MuseRecorder extends Vue {
   flex-direction: column;
   justify-content: center;
   font-family: 'Rajdhani', sans-serif;
+  transition: opacity 10s;
+}
+
+.muse-recorder__greeting-title {
   font-weight: 300;
   filter: blur(1.5px);
   opacity: 0.7;
-  transition: opacity 10s;
+}
+
+.muse-recorder__greeting-tuto {
+  font-size: 20px;
+  margin-top: 2em;
+  margin-left: auto;
+  margin-right: auto;
+  font-weight: bold;
+  color: gray;
+  padding: 20px;
+  border-radius: 0.1em;
+  background-color: transparentize(white, 0.9);
+}
+
+.muse-recorder__greeting-tuto-button {
+  cursor: pointer;
+  font-size: larger;
+  padding: 0.5em 1em;
+  margin: 1em auto;
+  border: solid gray 1px;
+  width: auto;
+  font-weight: bolder;
+  max-width: 100px;
+  text-transform: uppercase;
+  text-align: center; 
+
+  &:focus,
+  &:active,
+  &:hover {
+    background-color: gray;
+    color: black;
+  }
 }
 
 .muse-recorder__greeting--connected {
@@ -322,8 +555,12 @@ export default class MuseRecorder extends Vue {
 
 .muse-recorder__connection-icon,
 .muse-recorder__session-control-icon,
-.muse-recorder__session-details-icon {
-  color: white;
+.muse-recorder__session-details-icon,
+.muse-recorder__viz-controls-toggle,
+.muse-recorder__stop-button,
+.muse-recorder__chart-toggle,
+.muse-recorder__info-toggle {
+  color: gray;
   cursor: pointer;
 }
 
@@ -333,6 +570,61 @@ export default class MuseRecorder extends Vue {
   font-size: 2em;
   opacity: 1;
   transition: opacity 1s;
+}
+
+.muse-recorder__viz-controls-toggle {
+  top: 0;
+  right: 0;
+}
+
+.muse-recorder__chart-toggle {
+  bottom: 0;
+  left: 0;
+}
+
+.muse-recorder__info-toggle {
+  top: 0;
+  left: 0;
+}
+
+.muse-recorder__session-details,
+.muse-recorder__viz-controls,
+.muse-recorder__info-panel,
+ {
+  display: flex;
+  background: transparentize(white, 0.9);
+  color: lightgray;
+}
+
+.muse-recorder__info-panel {
+  background: transparentize(black, 0.3);
+  padding-top: 50px;
+  text-align: left;
+  font-size: 20px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: bold;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.muse-recorder__viz-controls {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  min-width: 150px;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.muse-recorder__stop-button {
+  color: lightgray;
+  bottom: 0;
+  right: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: larger;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 .muse-recorder__connection--connected {
@@ -372,6 +664,8 @@ export default class MuseRecorder extends Vue {
 }
 
 .muse-recorder__session-details {
+  bottom: 0;
+  background: transparentize(black, 0.5);
   margin: auto;
 }
 

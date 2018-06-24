@@ -24,9 +24,9 @@
       </div>
     </div>
 
-    <button @click="saveAsJSON()" style="flex: none; height: 2em;">
+    <!-- <button @click="saveAsJSON()" style="flex: none; height: 2em;">
       Export session to JSON file
-    </button>
+    </button> -->
   </div>
 </template>
 
@@ -111,7 +111,13 @@ export default class Session extends Vue {
 }
 
 .session__legend {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: auto;
+  justify-content: center;
   text-align: left;
+  padding-left: 3em;
 }
 
 .session__legend__item__color {
