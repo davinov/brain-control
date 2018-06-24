@@ -23,7 +23,7 @@
 
     <div
       class="muse-recorder__greeting"
-      :class="{'muse-recorder__greeting--connected': connectionStatus}"
+      :class="{'muse-recorder__greeting--connected': connectionStatus && !paused}"
       v-if="n == 0"
     >
       <div class="muse-recorder__greeting-title">
@@ -451,6 +451,7 @@ export default class MuseRecorder extends Vue {
     }
     this.sessionInProgress = false;
     this.paused = true;
+    this.n = 0;
   }
 
   private toggleVizControlsDisplayed() {
