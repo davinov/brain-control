@@ -11,10 +11,10 @@
  * See https://goo.gl/2aRDsh
  */
 
-importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.0.1/workbox-sw.js");
+importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.3.0/workbox-sw.js");
 
 importScripts(
-  "precache-manifest.cedfcd8790105884b2256c417a2129ed.js"
+  "/brain-control/precache-manifest.697ffb425b6dcf223e9ee5d0228def59.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "muse-recorder"});
