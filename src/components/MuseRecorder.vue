@@ -220,12 +220,12 @@
           <strong>What is this installation?</strong>
         </p>
         <p>
-          This installation uses a headband to listen to your brain eletrical rythms.<br/>
-          It then computes the power of particular rythms and translates them into a particles vizualisation.
+          This installation uses a headband to listen to your brain elcetrical rhythms.<br/>
+          It then computes the power of particular frequencies and translates them into a particles visualization.
         </p>
         <p>
-          These rythms, called "Alpha", "Beta" and "Gamma" waves are the object of many scientific research to date.
-          What they represent in tems of "state of mind" is not that easy to determine, and a scientific consensus about them is not yet reached.<br/>
+          These rhythms, called "Alpha", "Beta" and "Gamma" waves are the object of many scientific research to date.
+          What they represent in terms of "state of mind" is not that easy to determine, and a scientific consensus about them is not yet reached.<br/>
           Still, there is many knowledge and information about them in books and on the web, which I used to create this art: <br/>
           <ul>
             <li>alpha waves are up in calm state</li>
@@ -242,8 +242,8 @@
         </p>
         <p>
           It's easy for some people to control their brainwaves in a way, while it's quite difficult to impossible for others.
-          Take some time to try to calm yoursel or concentrate on something, or just let your mind wander and see what happens.
-          One simple exercice some manage very well is to close your eyes for a few seconds and empty your mind: for some people ths triggers a load of alpha waves, which make the light blue circling vortex appear.
+          Take some time to try to calm yourself or concentrate on something, or just let your mind wander and see what happens.
+          One simple exercise some manage very well is to close your eyes for a few seconds and empty your mind: for some people ths triggers a load of alpha waves, which make the light blue swirling vortex appear.
         </p>
         <p>
           It's very important to reset the device with the Stop button each time the headband changes heads.
@@ -375,6 +375,9 @@ export default class MuseRecorder extends Vue {
 
   private startSession() {
     this.currentSession = [];
+    if (this.currentSessionSubscription) {
+      this.currentSessionSubscription.unsubscribe();
+    }
     // @ts-ignore
     this.currentSessionSubscription = (this.museClient.relativeBandPowers as Observable<EEGRelativePowerBand[]>)
       .pipe(
