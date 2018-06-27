@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.3.0/workbox-sw.js");
 
 importScripts(
-  "/brain-control/precache-manifest.db8b740e5a5e98c89332c0f47a4121ea.js"
+  "/brain-control/precache-manifest.b00f26f348c61d4b8763b91f2b592652.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "muse-recorder"});
