@@ -33,7 +33,7 @@
       </div>
       <div class="muse-recorder__greeting-tuto">
         <div class="muse-recorder__greeting-tuto-intro">
-          Turn on the headband, adjust it on your forehead and observe...
+          Turn on the headband, adjust it on your forehead, wait 10s and observe...
         </div>
         <div
           class="muse-recorder__greeting-tuto-button"
@@ -162,6 +162,11 @@
         @click="reload()"
       > Not working? Reload the page
       </button>
+      <div>
+        <input type="checkbox"
+          v-model="partyMode"
+        ></input> Party mode
+      </div>
     </div>
 
     <div
@@ -284,6 +289,34 @@
       />
     </div>
 
+    <div
+      class="muse-recorder__screenshot-panel"
+      v-if="screenshotPanelOpened"
+    >
+      <div v-if="!screenshotSent">
+        <input
+          type="text"
+          placeholder="Your e-mail"
+          v-model="screenshotEmail"
+        />
+        <button
+          @click="saveScreenshot()"
+        >Send me the picture after Nowhere!</button>
+      </div>
+      <div v-else>Saved! I will send you this after Nowhere.</div>
+    </div>
+
+
+    <div
+      class="muse-recorder__screenshot-toggle"
+      @click="toggleScreenshotPanel()"
+      v-if="n != 0"
+    >
+      <font-awesome-icon
+        :icon="['fas', screenshotPanelOpened ? 'times' : 'camera']"
+      />
+    </div>
+
   </div>
 </template>
 
@@ -299,8 +332,8 @@ import Session from './Session.vue';
 import Visualization from './Visualization.vue';
 import ParticlesVisualization from './ParticlesVisualization.vue';
 import FieldVisualization from './FieldVisualization.vue';
-
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome';
+import { saveAs } from 'file-saver';
 
 import fontawesome from '@fortawesome/fontawesome';
 import faBluetooth from '@fortawesome/fontawesome-free-brands/faBluetooth';
@@ -316,14 +349,17 @@ import faInfoCircle from '@fortawesome/fontawesome-free-solid/faInfoCircle';
 import faSyncAlt from '@fortawesome/fontawesome-free-solid/faSyncAlt';
 import faSlidersH from '@fortawesome/fontawesome-free-solid/faSlidersH';
 import faTimes from '@fortawesome/fontawesome-free-solid/faTimes';
+import faCamera from '@fortawesome/fontawesome-free-solid/faCamera';
 
 fontawesome.library.add(
   faBluetooth, faBluetoothB,
   faPlayCircle, faPauseCircle,
   faCaretSquareDown, faCaretSquareUp,
   faPlay, faStop,
-  faChartLine, faInfoCircle, faSyncAlt, faSlidersH, faTimes
+  faChartLine, faInfoCircle, faSyncAlt, faSlidersH, faTimes, faCamera
 );
+
+
 
 export interface AveragedRelativeBandPowers {
   [index: string]: number;
@@ -345,6 +381,9 @@ export default class MuseRecorder extends Vue {
   private currentSessionSubscription: Subscription;
   private vizControlsDisplayed: boolean = false;
   private infoPanelOpened: boolean = false;
+  private screenshotPanelOpened: boolean = false;
+  private screenshotEmail: string = "";
+  private screenshotSent: boolean = false;
 
   private currentSession: AveragedRelativeBandPowers[] = [];
 
@@ -356,6 +395,15 @@ export default class MuseRecorder extends Vue {
   private n: number = 0;
   private paused: boolean = true;
   private sessionsDetailsOpened: boolean = false;
+
+  private partyMode: boolean = true;
+  private partyScales = {
+    ALPHA: [.20, .33],
+    BETA_1: [.15, .25],
+    BETA_2: [.15, .25],
+    BETA_3: [.15, .25],
+    GAMMA: [.10, .20]
+  }
 
   private created() {
     this.museClient = new MuseClient();
@@ -374,10 +422,15 @@ export default class MuseRecorder extends Vue {
   }
 
   private startSession() {
+    function clamp (v) {
+      return Math.max(Math.min(1, v), 0);
+    }
+
     this.currentSession = [];
     if (this.currentSessionSubscription) {
       this.currentSessionSubscription.unsubscribe();
     }
+
     // @ts-ignore
     this.currentSessionSubscription = (this.museClient.relativeBandPowers as Observable<EEGRelativePowerBand[]>)
       .pipe(
@@ -417,35 +470,60 @@ export default class MuseRecorder extends Vue {
           this.currentSession.push(Object.freeze(arbps));
           this.currentSession = _.takeRight(this.currentSession, 100);
           this.n = Math.min(this.currentSession.length * 5, 100);
-          this.alpha = (
-            arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
-          ) / (
-            Math.max(...this.currentSession.map( d => d.ALPHA )) - Math.min(...this.currentSession.map( d => d.ALPHA ))
-          );
-          this.gamma = (
-            arbps.GAMMA - Math.min(...this.currentSession.map( d => d.GAMMA ))
-          ) / (
-            Math.max(...this.currentSession.map( d => d.GAMMA )) - Math.min(...this.currentSession.map( d => d.GAMMA ))
-          );
-          this.beta1 = (
-            arbps.BETA_1 - Math.min(...this.currentSession.map( d => d.BETA_1 ))
-          ) / (
-            Math.max(...this.currentSession.map( d => d.BETA_1 )) - Math.min(...this.currentSession.map( d => d.BETA_1 ))
-          );
-          this.beta2 = (
-            arbps.BETA_2 - Math.min(...this.currentSession.map( d => d.BETA_2 ))
-          ) / (
-            Math.max(...this.currentSession.map( d => d.BETA_2 )) - Math.min(...this.currentSession.map( d => d.BETA_2 ))
-          );
-          this.beta3 = (
-            arbps.BETA_3 - Math.min(...this.currentSession.map( d => d.BETA_3 ))
-          ) / (
-            Math.max(...this.currentSession.map( d => d.BETA_3 )) - Math.min(...this.currentSession.map( d => d.BETA_3 ))
-          );
+
+          if (this.partyMode) {
+            this.alpha = clamp(
+              ( arbps.ALPHA - this.partyScales.ALPHA[0] ) / ( this.partyScales.ALPHA[1] - this.partyScales.ALPHA[0])
+            );
+            this.beta1 = clamp(
+              ( arbps.BETA_1 - this.partyScales.BETA_1[0] ) / ( this.partyScales.BETA_1[1] - this.partyScales.BETA_1[0])
+            );
+            this.beta2 = clamp(
+              ( arbps.BETA_2 - this.partyScales.BETA_2[0] ) / ( this.partyScales.BETA_2[1] - this.partyScales.BETA_2[0])
+            );
+            this.beta3 = clamp(
+              ( arbps.BETA_3 - this.partyScales.BETA_3[0] ) / ( this.partyScales.BETA_3[1] - this.partyScales.BETA_3[0])
+            );
+            this.gamma = clamp(
+              ( arbps.GAMMA - this.partyScales.GAMMA[0] ) / ( this.partyScales.GAMMA[1] - this.partyScales.GAMMA[0])
+            );
+          } else {
+            this.alpha = (
+              arbps.ALPHA - Math.min(...this.currentSession.map( d => d.ALPHA ))
+            ) / (
+              Math.max(...this.currentSession.map( d => d.ALPHA )) - Math.min(...this.currentSession.map( d => d.ALPHA ))
+            );
+            this.gamma = (
+              arbps.GAMMA - Math.min(...this.currentSession.map( d => d.GAMMA ))
+            ) / (
+              Math.max(...this.currentSession.map( d => d.GAMMA )) - Math.min(...this.currentSession.map( d => d.GAMMA ))
+            );
+            this.beta1 = (
+              arbps.BETA_1 - Math.min(...this.currentSession.map( d => d.BETA_1 ))
+            ) / (
+              Math.max(...this.currentSession.map( d => d.BETA_1 )) - Math.min(...this.currentSession.map( d => d.BETA_1 ))
+            );
+            this.beta2 = (
+              arbps.BETA_2 - Math.min(...this.currentSession.map( d => d.BETA_2 ))
+            ) / (
+              Math.max(...this.currentSession.map( d => d.BETA_2 )) - Math.min(...this.currentSession.map( d => d.BETA_2 ))
+            );
+            this.beta3 = (
+              arbps.BETA_3 - Math.min(...this.currentSession.map( d => d.BETA_3 ))
+            ) / (
+              Math.max(...this.currentSession.map( d => d.BETA_3 )) - Math.min(...this.currentSession.map( d => d.BETA_3 ))
+            );
+          }
         }
       );
     this.sessionInProgress = true;
     this.paused = false;
+  }
+
+  private toggleScreenshotPanel () {
+    this.screenshotEmail = '';
+    this.screenshotSent = false;
+    this.screenshotPanelOpened = !this.screenshotPanelOpened;
   }
 
   private stopSession() {
@@ -463,6 +541,23 @@ export default class MuseRecorder extends Vue {
 
   private reload() {
     window.location.reload();
+  }
+
+  private saveScreenshot() {
+    let canvas = this.$el.querySelector('canvas');
+    if (!canvas) { return }
+
+    canvas.toBlob( (blob) => {
+      if (!blob) { return }
+      saveAs(blob, `${this.screenshotEmail || 'anonymous'}-${Date().toString()}.png`);
+      this.screenshotSent = true;
+      this.screenshotEmail = '';
+
+      setTimeout( () => {
+        this.screenshotPanelOpened = false
+      }, 6000)
+
+    });
   }
 
   private beforeDestroy() {
@@ -494,7 +589,9 @@ export default class MuseRecorder extends Vue {
 .muse-recorder__chart-toggle,
 .muse-recorder__session-details,
 .muse-recorder__info-toggle,
-.muse-recorder__info-panel {
+.muse-recorder__info-panel,
+.muse-recorder__screenshot-toggle,
+.muse-recorder__screenshot-panel {
   position: absolute;
   background: transparent;
   padding: 1em;
@@ -563,7 +660,8 @@ export default class MuseRecorder extends Vue {
 .muse-recorder__viz-controls-toggle,
 .muse-recorder__stop-button,
 .muse-recorder__chart-toggle,
-.muse-recorder__info-toggle {
+.muse-recorder__info-toggle,
+.muse-recorder__screenshot-toggle {
   color: gray;
   cursor: pointer;
 }
@@ -591,10 +689,16 @@ export default class MuseRecorder extends Vue {
   left: 0;
 }
 
+.muse-recorder__screenshot-toggle {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .muse-recorder__session-details,
 .muse-recorder__viz-controls,
 .muse-recorder__info-panel,
- {
+.muse-recorder__screenshot-panel {
   display: flex;
   background: transparentize(white, 0.9);
   color: lightgray;
@@ -611,6 +715,27 @@ export default class MuseRecorder extends Vue {
   overflow-y: auto;
   overflow-x: hidden;
 }
+
+.muse-recorder__screenshot-panel {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 50px;
+  text-align: center;
+
+  > div {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+
+    > input {
+      font-size: 1.5em;
+      flex: 1;
+      margin-right: 30px;
+    }
+  }
+}
+
 
 .muse-recorder__viz-controls {
   right: 0;

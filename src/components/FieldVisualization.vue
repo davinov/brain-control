@@ -8,7 +8,8 @@ import ColorModes from '../lib/field-play/programs/colorModes';
 import { easeExpInOut } from 'd3-ease';
 
 function scale(x: number): number {
-  return easeExpInOut(x);
+  // return easeExpInOut(x);
+  return x;
 }
 
 @Component
@@ -70,7 +71,7 @@ export default class FieldVizualisation extends Vue {
 
   mounted () {
     let canvas: HTMLCanvasElement = this.$el as HTMLCanvasElement;
-    let ctxOptions = { antialias: true, alpha: false };
+    let ctxOptions = { antialias: true, alpha: false, preserveDrawingBuffer: true };
     let gl = canvas.getContext('webgl', ctxOptions) ||
     canvas.getContext('experimental-webgl', ctxOptions);
 
