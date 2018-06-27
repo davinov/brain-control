@@ -37,6 +37,7 @@ export default function initScene(gl) {
   var canvasRect = { width: 0, height: 0, top: 0, left: 0 };
   setWidthHeight(window.innerWidth, window.innerHeight);
   // window.addEventListener('resize', onResize, true);
+  onResize();
 
   // TODO: It feels like bounding box management needs to be moved out from here.
   // TODO: bbox needs to be a class with width/height properties.
