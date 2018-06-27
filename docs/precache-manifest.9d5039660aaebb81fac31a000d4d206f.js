@@ -4,19 +4,19 @@ self.__precacheManifest = [
     "url": "/brain-control/js/chunk-vendors.d52cfe8f.js"
   },
   {
-    "revision": "196df26ec8e0e4b70228",
-    "url": "/brain-control/js/app.196df26e.js"
+    "revision": "cc9873bfa31e57a4b1ea",
+    "url": "/brain-control/js/app.cc9873bf.js"
   },
   {
     "revision": "cae90ce00cd6afc3a664",
     "url": "/brain-control/js/0.cae90ce0.js"
   },
   {
-    "revision": "874713803f9f29f6ad2fbd5ddc68ea2d",
+    "revision": "928bf3b03703924e47535d07dd3b9ceb",
     "url": "/brain-control/index.html"
   },
   {
-    "revision": "196df26ec8e0e4b70228",
+    "revision": "cc9873bfa31e57a4b1ea",
     "url": "/brain-control/css/app.118443ad.css"
   }
 ];
