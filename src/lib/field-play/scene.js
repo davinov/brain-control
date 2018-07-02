@@ -274,9 +274,10 @@ export default function initScene(gl) {
   function onResize() {
     setWidthHeight(window.innerWidth, window.innerHeight);
 
-    screenProgram.updateScreenTextures();
-
-    updateBoundingBox();
+    if (screenProgram) {
+      screenProgram.updateScreenTextures();
+      updateBoundingBox();
+    }
   }
 
   function setWidthHeight(w, h) {
