@@ -44,6 +44,13 @@
         <div class="muse-recorder__greeting-tuto-outro">
           When your finished or before passing the headband to someone else, hit STOP <font-awesome-icon icon="stop" style="font-size:smaller"/>
         </div>
+        <hr>
+        <div
+          class="muse-recorder__greeting-tuto-button"
+          @click="connectToRemoteController()"
+        >
+          Connect to tablet <font-awesome-icon icon="play" style="font-size:smaller"/>
+        </div>
       </div>
     </div>
 
@@ -334,6 +341,7 @@ import ParticlesVisualization from './ParticlesVisualization.vue';
 import FieldVisualization from './FieldVisualization.vue';
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome';
 import { saveAs } from 'file-saver';
+import io from 'socket.io-client';
 
 import fontawesome from '@fortawesome/fontawesome';
 import faBluetooth from '@fortawesome/fontawesome-free-brands/faBluetooth';
@@ -405,8 +413,36 @@ export default class MuseRecorder extends Vue {
     GAMMA: [.10, .20]
   }
 
+  private socket;
+
   private created() {
     this.museClient = new MuseClient();
+  }
+
+  private async connectToRemoteController() {
+    this.socket = io('http://127.0.0.1:3000/', {
+      reconnectionAttempts: 2
+    });
+
+    this.socket.on('connect', () => {
+      this.n = 100;
+      this.alpha = 1;
+      this.paused = false;
+    });
+
+    this.socket.on('control', (controlValues) => {
+      this.n = controlValues.n;
+      this.alpha = controlValues.alpha;
+      this.beta1 = controlValues.beta1;
+      this.beta2 = controlValues.beta2;
+      this.beta3 = controlValues.beta3;
+      this.gamma = controlValues.gamma;
+    });
+
+    this.socket.on('disconnect', () => {
+      this.paused = true;
+      this.n = 0;
+    })
   }
 
   private async connectToMuse() {
