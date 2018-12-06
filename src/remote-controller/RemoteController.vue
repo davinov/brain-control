@@ -1,6 +1,7 @@
 <template>
-  <div id="muse-recorder-app">
-    <div>
+  <div class="remote-controller">
+    <div class="remote-controller__inputs">
+      <div class="remote-controller__input-container alpha">
         <input
           type="range"
           v-model.number="alpha"
@@ -10,7 +11,7 @@
         />
         <pre>alpha: {{ alpha }}</pre>
       </div>
-      <div>
+      <div class="remote-controller__input-container beta1">
         <input
           type="range"
           v-model.number="beta1"
@@ -20,7 +21,7 @@
         />
         <pre>beta1: {{ beta1 }}</pre>
       </div>
-      <div>
+      <div class="remote-controller__input-container beta2">
         <input
           type="range"
           v-model.number="beta2"
@@ -30,7 +31,7 @@
         />
         <pre>beta2: {{ beta2 }}</pre>
       </div>
-      <div>
+      <div class="remote-controller__input-container beta3">
         <input
           type="range"
           v-model.number="beta3"
@@ -40,7 +41,7 @@
         />
         <pre>beta3: {{ beta3 }}</pre>
       </div>
-      <div>
+      <div class="remote-controller__input-container gamma">
         <input
           type="range"
           v-model.number="gamma"
@@ -50,16 +51,17 @@
         />
         <pre>gamma: {{ gamma }}</pre>
       </div>
-      <div>
+      <div class="remote-controller__input-container n">
         <input
           type="range"
           v-model.number="n"
-          min="0"
+          min="50"
           max="100"
           step="1"
         />
         <pre>n: {{ n }}</pre>
       </div>
+    </div>
   </div>
 </template>
 
@@ -120,7 +122,7 @@ export default class RemoteController extends Vue {
 </script>
 
 <style lang="scss">
-#muse-recorder-app {
+.remote-controller {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -130,4 +132,104 @@ export default class RemoteController extends Vue {
   height: 100%;
   overflow: hidden;
 }
+
+.remote-controller__inputs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  justify-content: stretch;
+  overflow: hidden;
+}
+
+.remote-controller__input-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+
+  pre {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    right: 50%;
+
+    visibility: hidden;
+  }
+
+  &:hover pre {
+    visibility: visible;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+
+  }
+
+  input[type=range]:focus {
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 100%;
+    cursor: pointer;
+    background: black;
+    border: none;
+    transition: background-color 0.5s;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    height: 100%;
+    width: 1px;
+    border: none;
+    background: white;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+
+  input[type=range]:hover {
+    &::-webkit-slider-runnable-track {
+      background-color: #222;
+    }
+  }
+
+  &.alpha {
+    input[type=range]::-webkit-slider-thumb {
+      background: cyan;
+    }
+  }
+
+  &.beta1 {
+    input[type=range]::-webkit-slider-thumb {
+      background: blue;
+    }
+  }
+
+  &.beta2 {
+    input[type=range]::-webkit-slider-thumb {
+      background: purple;
+    }
+  }
+
+  &.beta3 {
+    input[type=range]::-webkit-slider-thumb {
+      background: red;
+    }
+  }
+
+  &.gamma {
+    input[type=range]::-webkit-slider-thumb {
+      background: orange;
+    }
+  }
+
+  &.n {
+    input[type=range]::-webkit-slider-thumb {
+      background: gray;
+    }
+  }
+}
+
 </style>
