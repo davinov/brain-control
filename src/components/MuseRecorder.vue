@@ -65,7 +65,7 @@
       />
     </div> -->
 
-    <div
+    <!-- <div
       class="muse-recorder__session-details"
       v-if="sessionsDetailsOpened"
     >
@@ -183,7 +183,7 @@
       <font-awesome-icon
         :icon="['fas', vizControlsDisplayed ? 'times' : 'sliders-h']"
       />
-    </div>
+    </div> -->
 
     <!-- <div
       class="muse-recorder__session-control"
@@ -217,7 +217,7 @@
     </div> -->
 
 
-    <div
+    <!-- <div
       class="muse-recorder__info-panel"
       v-if="infoPanelOpened"
     >
@@ -322,7 +322,7 @@
       <font-awesome-icon
         :icon="['fas', screenshotPanelOpened ? 'times' : 'camera']"
       />
-    </div>
+    </div> -->
 
   </div>
 </template>

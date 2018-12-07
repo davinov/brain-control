@@ -128,6 +128,7 @@ export default class RemoteController extends Vue {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  background-color: black;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -157,7 +158,7 @@ export default class RemoteController extends Vue {
   }
 
   &:hover pre {
-    visibility: visible;
+    // visibility: visible;
   }
 
   input[type=range] {
@@ -189,11 +190,11 @@ export default class RemoteController extends Vue {
     -webkit-appearance: none;
   }
 
-  input[type=range]:hover {
-    &::-webkit-slider-runnable-track {
-      background-color: #222;
-    }
-  }
+  // input[type=range]:hover {
+  //   &::-webkit-slider-runnable-track {
+  //     background-color: #222;
+  //   }
+  // }
 
   &.alpha {
     input[type=range]::-webkit-slider-thumb {
