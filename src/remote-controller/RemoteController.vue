@@ -1,5 +1,5 @@
 <template>
-  <div class="remote-controller">
+  <div class="remote-controller" :class="{'flash': flash}">
     <div class="remote-controller__inputs">
       <div class="remote-controller__input-container alpha">
         <input
@@ -68,6 +68,8 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import io from 'socket.io-client';
+import _ from 'lodash';
+import { setTimeout } from 'timers';
 
 @Component({
   components: {
@@ -76,6 +78,7 @@ import io from 'socket.io-client';
 })
 export default class RemoteController extends Vue {
   private socket;
+  private interval;
 
   private alpha: number = 0.5;
   private beta1: number = 0.5;
@@ -83,6 +86,8 @@ export default class RemoteController extends Vue {
   private beta3: number = 0.5;
   private gamma: number = 0.5;
   private n: number = 75;
+  private lastModificationTime: number = Date.now();
+  private flash: boolean = false;
 
   private mounted() {
     this.socket = io({
@@ -102,6 +107,10 @@ export default class RemoteController extends Vue {
 
     this.socket.on('disconnect', () => {
     });
+
+    this.interval = setInterval( () => {
+      this.randomizeIfNotModifiedForSomeTime();
+    }, 1000);
   }
 
   get controlMessage() {
@@ -116,11 +125,43 @@ export default class RemoteController extends Vue {
   }
 
   @Watch('controlMessage')
-  private sendControlMessage() {
-    if (!this.socket)
-      return;
+  private onControlMessageModified() {
+    this.lastModificationTime = Date.now();
+    this.sendControlMessage()
+  }
 
-    this.socket.emit('control', this.controlMessage);
+  private sendControlMessage() {
+    _.throttle( () => {
+      if (!this.socket)
+        return;
+  
+      console.log('send control message');
+  
+      this.socket.emit('control', this.controlMessage);
+    }, 250)
+  }
+
+  private randomizeIfNotModifiedForSomeTime() {
+    if (Date.now() - this.lastModificationTime > 30000) {
+      console.log('randomize!');
+
+      this.flash = true;
+
+      setTimeout( () => {
+        this.flash = false;
+
+        this.n = 75;
+        this.alpha = Math.random();
+        this.beta1 = Math.random();
+        this.beta2 = Math.random();
+        this.beta3 = Math.random();
+        this.gamma = Math.random();
+      }, 100);
+    }
+  }
+
+  onDestroy() {
+    clearInterval(this.interval);
   }
 }
 </script>
@@ -136,6 +177,15 @@ export default class RemoteController extends Vue {
   width: 100%;
   height: 100%;
   overflow: hidden;
+
+  &.flash {
+    input[type=range]::-webkit-slider-runnable-track {
+      background: white;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      opacity: 0;
+    }
+  }
 }
 
 .remote-controller__inputs {
@@ -177,12 +227,13 @@ export default class RemoteController extends Vue {
     outline: none;
   }
 
+
   input[type=range]::-webkit-slider-runnable-track {
     height: 100%;
     cursor: pointer;
     background: black;
     border: none;
-    // transition: background-color 0.5s;
+    transition: background-color 0.1s;
   }
 
   input[type=range]::-webkit-slider-thumb {
@@ -192,6 +243,7 @@ export default class RemoteController extends Vue {
     background: black;
     cursor: pointer;
     -webkit-appearance: none;
+    transition: opacity 0.1s;
   }
 
   // input[type=range]:hover {
