@@ -10,7 +10,10 @@ var io = require('socket.io')(http);
 app.use(express.static('../docs'))
 
 io.on('connection', function (socket) {
+  // console.log('connected')
+
   socket.on('control', function (msg) {
+    // console.log('control msg received')
     io.emit('control', msg);
   });
 });

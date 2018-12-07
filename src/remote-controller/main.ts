@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import RemoteController from './RemoteController.vue';
-import '../registerServiceWorker';
+// import '../registerServiceWorker';
 
 Vue.config.productionTip = false;
 

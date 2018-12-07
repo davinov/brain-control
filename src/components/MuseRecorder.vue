@@ -49,7 +49,13 @@
           class="muse-recorder__greeting-tuto-button"
           @click="connectToRemoteController()"
         >
-          Connect to tablet <font-awesome-icon icon="play" style="font-size:smaller"/>
+          Screen mode <font-awesome-icon icon="play" style="font-size:smaller"/>
+        </div>
+        <div
+          class="muse-recorder__greeting-tuto-button"
+          @click="goToRemoteController()"
+        >
+          Tablet mode <font-awesome-icon icon="play" style="font-size:smaller"/>
         </div>
       </div>
     </div>
@@ -417,6 +423,10 @@ export default class MuseRecorder extends Vue {
 
   private created() {
     this.museClient = new MuseClient();
+  }
+
+  private goToRemoteController() {
+    window.location.href = 'remote-controller.html';
   }
 
   private async connectToRemoteController() {

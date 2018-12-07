@@ -131,15 +131,11 @@ export default class RemoteController extends Vue {
   }
 
   private sendControlMessage() {
-    _.throttle( () => {
       if (!this.socket)
         return;
-  
-      console.log('send control message');
-  
+
       this.socket.emit('control', this.controlMessage);
-    }, 250)
-  }
+    }
 
   private randomizeIfNotModifiedForSomeTime() {
     if (Date.now() - this.lastModificationTime > 30000) {
