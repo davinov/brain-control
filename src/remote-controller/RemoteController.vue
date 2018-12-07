@@ -77,12 +77,12 @@ import io from 'socket.io-client';
 export default class RemoteController extends Vue {
   private socket;
 
-  private alpha: number = 0;
-  private beta1: number = 0;
-  private beta2: number = 0;
-  private beta3: number = 0;
-  private gamma: number = 0;
-  private n: number = 0;
+  private alpha: number = 0.5;
+  private beta1: number = 0.5;
+  private beta2: number = 0.5;
+  private beta3: number = 0.5;
+  private gamma: number = 0.5;
+  private n: number = 75;
 
   private mounted() {
     this.socket = io({
@@ -90,8 +90,12 @@ export default class RemoteController extends Vue {
     });
 
     this.socket.on('connect', () => {
-      this.n = 100;
-      this.gamma = 1;
+      this.n = 75;
+      this.alpha = 0.5;
+      this.beta1 = 0.5;
+      this.beta2 = 0.5;
+      this.beta3 = 0.5;
+      this.gamma = 0.5;
 
       this.sendControlMessage();
     });
@@ -178,14 +182,14 @@ export default class RemoteController extends Vue {
     cursor: pointer;
     background: black;
     border: none;
-    transition: background-color 0.5s;
+    // transition: background-color 0.5s;
   }
 
   input[type=range]::-webkit-slider-thumb {
     height: 100%;
     width: 1px;
     border: none;
-    background: white;
+    background: black;
     cursor: pointer;
     -webkit-appearance: none;
   }
@@ -199,36 +203,42 @@ export default class RemoteController extends Vue {
   &.alpha {
     input[type=range]::-webkit-slider-thumb {
       background: cyan;
+      box-shadow: 0 0 7px 2px cyan;
     }
   }
 
   &.beta1 {
     input[type=range]::-webkit-slider-thumb {
       background: blue;
+      box-shadow: 0 0 7px 2px blue;
     }
   }
 
   &.beta2 {
     input[type=range]::-webkit-slider-thumb {
       background: purple;
+      box-shadow: 0 0 7px 2px purple;
     }
   }
 
   &.beta3 {
     input[type=range]::-webkit-slider-thumb {
       background: red;
+      box-shadow: 0 0 7px 2px red;
     }
   }
 
   &.gamma {
     input[type=range]::-webkit-slider-thumb {
       background: orange;
+      box-shadow: 0 0 7px 2px orange;
     }
   }
 
   &.n {
     input[type=range]::-webkit-slider-thumb {
       background: gray;
+      box-shadow: 0 0 7px 2px gray;
     }
   }
 }
